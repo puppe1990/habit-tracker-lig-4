@@ -190,7 +190,7 @@ export default function ConnectFourHabitTracker() {
     }
   }, []);
 
-  // Auto-mark today's habits as "cumprido" if not already marked
+  // Auto-mark empty past days in current month (up to today) as "done"
   useEffect(() => {
     if (!isLoaded || habits.length === 0) return;
 
@@ -204,10 +204,13 @@ export default function ConnectFourHabitTracker() {
       const currentMonthKey = getMonthKey(currentYear, currentMonth);
       const currentMonthRecords = records[currentMonthKey] || {};
       
-      // Check if any habits are unmarked for today
+      // Check if there are any unmarked days up to today
       const needsAutoMark = habits.some(habit => {
         const habitRecords = currentMonthRecords[habit.id] || {};
-        return habitRecords[currentDay] === undefined;
+        for (let d = 1; d <= currentDay; d++) {
+          if (habitRecords[d] === undefined) return true;
+        }
+        return false;
       });
 
       if (needsAutoMark) {
@@ -219,12 +222,14 @@ export default function ConnectFourHabitTracker() {
           let markedCount = 0;
           habits.forEach(habit => {
             const habitDays = copy[mk][habit.id] ? { ...copy[mk][habit.id] } : {};
-            // Only mark as "done" if not already marked
-            if (habitDays[currentDay] === undefined) {
-              habitDays[currentDay] = "done";
-              copy[mk][habit.id] = habitDays;
-              markedCount++;
+            // Fill empty days from day 1 up to today as "done"
+            for (let d = 1; d <= currentDay; d++) {
+              if (habitDays[d] === undefined) {
+                habitDays[d] = "done";
+                markedCount++;
+              }
             }
+            copy[mk][habit.id] = habitDays;
           });
           
           // Show notification if any habits were auto-marked
@@ -1028,7 +1033,7 @@ export default function ConnectFourHabitTracker() {
                       Hábitos marcados automaticamente
                     </p>
                     <p className="text-xs text-emerald-600">
-                      Os hábitos de hoje foram marcados como cumpridos
+                      Dias vazios até hoje foram marcados como cumpridos
                     </p>
                   </div>
                 </div>
