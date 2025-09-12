@@ -727,15 +727,8 @@ export default function ConnectFourHabitTracker() {
 
   // Summary tab component
   function SummaryTab() {
-    const unbrokenHabits = habits.filter(habit => {
-      const summary = getHabitSummary(habit.id);
-      return !summary.isBroken && summary.totalCumprido > 0;
-    });
-
-    const totalCumprido = unbrokenHabits.reduce((sum, habit) => {
-      const summary = getHabitSummary(habit.id);
-      return sum + summary.totalCumprido;
-    }, 0);
+    const summaries = habits.map(habit => ({ habit, summary: getHabitSummary(habit.id) }));
+    const totalCumprido = summaries.reduce((sum, item) => sum + item.summary.totalCumprido, 0);
 
     if (habits.length === 0) {
       return <EmptyState />;
@@ -764,28 +757,8 @@ export default function ConnectFourHabitTracker() {
         </div>
 
         {/* Habit Cards */}
-        {unbrokenHabits.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-12 shadow-inner ring-1 ring-amber-200/50"
-          >
-            <div className="text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-orange-100 shadow-lg ring-1 ring-amber-200/50">
-                <XCircle className="h-10 w-10 text-amber-500" />
-              </div>
-              <h3 className="mb-3 text-xl font-bold text-amber-800">Nenhum hábito ininterrupto</h3>
-              <p className="text-amber-600">
-                Todos os hábitos foram quebrados em algum momento. Mantenha a consistência para ver o resumo!
-              </p>
-            </div>
-          </motion.div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {unbrokenHabits.map((habit, index) => {
-              const summary = getHabitSummary(habit.id);
-              return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {summaries.map(({ habit, summary }, index) => (
                 <motion.div
                   key={habit.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -813,6 +786,14 @@ export default function ConnectFourHabitTracker() {
                           </div>
                           <span className="text-xs text-slate-500">maior sequência</span>
                         </div>
+                        {summary.isBroken && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1.5 text-rose-700 ring-1 ring-rose-200/50">
+                              <XCircle className="h-4 w-4" />
+                              <span className="text-sm font-semibold">quebrado</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 shadow-sm ring-1 ring-emerald-200/50">
@@ -839,27 +820,8 @@ export default function ConnectFourHabitTracker() {
                   {/* Subtle glow effect */}
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-teal-500/0 opacity-0 blur-sm transition-opacity group-hover:opacity-10" />
                 </motion.div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Broken habits info */}
-        {habits.length > unbrokenHabits.length && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="rounded-2xl bg-gradient-to-r from-slate-50 to-gray-50 p-4 shadow-sm ring-1 ring-slate-200/50"
-          >
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <XCircle className="h-4 w-4 text-slate-400" />
-              <span>
-                {habits.length - unbrokenHabits.length} hábito(s) foram quebrados e não aparecem no resumo
-              </span>
-            </div>
-          </motion.div>
-        )}
+          ))}
+        </div>
       </motion.div>
     );
   }
