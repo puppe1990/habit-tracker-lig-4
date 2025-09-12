@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw, Flame } from "lucide-react";
 
 // === Helpers ===
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
@@ -422,7 +422,7 @@ export default function ConnectFourHabitTracker() {
     allRecords.sort((a, b) => a.date - b.date);
     
     if (allRecords.length === 0) {
-      return { totalCumprido: 0, isBroken: false };
+      return { totalCumprido: 0, isBroken: false, maxStreak: 0 };
     }
     
     // Find the last "missed" record
@@ -443,6 +443,38 @@ export default function ConnectFourHabitTracker() {
         totalCumprido++;
       }
     }
+
+    // Compute the maximum streak of consecutive "done" days across all time
+    let maxStreak = 0;
+    let currentStreak = 0;
+    let lastDate = null;
+    let lastStatus = null;
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    for (let i = 0; i < allRecords.length; i++) {
+      const { date, status } = allRecords[i];
+      if (status !== "done") {
+        currentStreak = 0;
+        lastDate = date;
+        lastStatus = status;
+        continue;
+      }
+
+      if (lastDate) {
+        const diffDays = Math.round((date - lastDate) / dayMs);
+        if (diffDays === 1 && lastStatus === "done") {
+          currentStreak += 1;
+        } else {
+          // Either there was a gap or previous day wasn't done
+          currentStreak = 1;
+        }
+      } else {
+        currentStreak = 1;
+      }
+      lastDate = date;
+      lastStatus = status;
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+    }
     
     // A habit is considered "broken" only if it has recent "missed" records
     // and no recent "done" records (indicating it was abandoned)
@@ -455,7 +487,8 @@ export default function ConnectFourHabitTracker() {
     
     return {
       totalCumprido: isBroken ? 0 : totalCumprido,
-      isBroken
+      isBroken,
+      maxStreak
     };
   };
 
@@ -765,12 +798,21 @@ export default function ConnectFourHabitTracker() {
                       <h3 className="mb-2 text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
                         {habit.name}
                       </h3>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 ring-1 ring-emerald-200/50">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm font-semibold">{summary.totalCumprido}</span>
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 ring-1 ring-emerald-200/50">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-sm font-semibold">{summary.totalCumprido}</span>
+                          </div>
+                          <span className="text-xs text-slate-500">dias cumpridos</span>
                         </div>
-                        <span className="text-xs text-slate-500">dias cumpridos</span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-orange-700 ring-1 ring-orange-200/50">
+                            <Flame className="h-4 w-4" />
+                            <span className="text-sm font-semibold">{summary.maxStreak}</span>
+                          </div>
+                          <span className="text-xs text-slate-500">maior sequência</span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 shadow-sm ring-1 ring-emerald-200/50">
