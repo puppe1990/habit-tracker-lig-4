@@ -130,8 +130,13 @@ function updateViewBySession() {
 function loadStorage() {
   return new Promise((resolve) => {
     if (!chrome?.storage?.local) {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      resolve(raw ? JSON.parse(raw) : null);
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        resolve(raw ? JSON.parse(raw) : null);
+      } catch (error) {
+        console.error("Failed to parse local storage:", error);
+        resolve(null);
+      }
       return;
     }
 
@@ -215,6 +220,9 @@ function getCurrentCellState(habitId) {
 }
 
 function setCurrentCellState(habitId, day, value) {
+  if (!state.records || typeof state.records !== "object") {
+    state.records = {};
+  }
   const mk = getMonthKey(state.year, state.month);
   const monthMap = state.records[mk] ? { ...state.records[mk] } : {};
   const habitMap = monthMap[habitId] ? { ...monthMap[habitId] } : {};
@@ -647,8 +655,10 @@ async function bootstrapSession() {
   const persisted = await loadStorage();
   if (persisted?.sessionToken) state.sessionToken = persisted.sessionToken;
   if (persisted?.user) state.user = persisted.user;
-  if (persisted?.habits) state.habits = persisted.habits;
-  if (persisted?.records) state.records = persisted.records;
+  if (Array.isArray(persisted?.habits)) state.habits = persisted.habits;
+  if (persisted?.records && typeof persisted.records === "object") {
+    state.records = persisted.records;
+  }
 
   if (!state.sessionToken) return;
 
