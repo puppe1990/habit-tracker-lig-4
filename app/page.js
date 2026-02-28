@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw, Flame } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw, Flame, LogOut } from "lucide-react";
 
 // === Helpers ===
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
@@ -26,6 +27,29 @@ const daysInMonth = (year, month /* 0-index */) => new Date(year, month + 1, 0).
 const getMonthKey = (year, month) => `${year}-${pad(month + 1)}`; // e.g., 2025-09
 
 const storageKey = "connect4_habit_tracker_v1";
+const defaultAppState = {
+  habits: [],
+  records: {},
+  darkMode: false,
+  isHorizontalLayout: true,
+};
+
+const normalizeAppState = (value = {}) => ({
+  habits: Array.isArray(value.habits) ? value.habits : [],
+  records: value.records && typeof value.records === "object" ? value.records : {},
+  darkMode: Boolean(value.darkMode),
+  isHorizontalLayout:
+    value.isHorizontalLayout === undefined ? true : Boolean(value.isHorizontalLayout),
+});
+
+const loadLocalState = () => {
+  try {
+    return normalizeAppState(JSON.parse(localStorage.getItem(storageKey) || "{}"));
+  } catch (error) {
+    console.error("Failed to parse local state:", error);
+    return { ...defaultAppState };
+  }
+};
 
 // === CSV Functions ===
 const exportToCSV = (habits, records) => {
@@ -166,6 +190,7 @@ const importFromCSV = (csvText) => {
 
 // === Main Component ===
 export default function ConnectFourHabitTracker() {
+  const router = useRouter();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
@@ -176,81 +201,81 @@ export default function ConnectFourHabitTracker() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(true);
-  const [showAutoMarkNotification, setShowAutoMarkNotification] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const remoteSyncEnabledRef = useRef(true);
 
-  // Load data from localStorage on mount
+  // Load state from Turso and require authentication when configured
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-      setHabits(saved.habits || []);
-      setRecords(saved.records || {});
-      setDarkMode(saved.darkMode || false);
-      setIsHorizontalLayout(saved.isHorizontalLayout !== undefined ? saved.isHorizontalLayout : true);
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+
+    const applyState = (state) => {
+      setHabits(state.habits);
+      setRecords(state.records);
+      setDarkMode(state.darkMode);
+      setIsHorizontalLayout(state.isHorizontalLayout);
       setIsLoaded(true);
-    }
-  }, []);
+    };
 
-  // Auto-mark empty past days in current month (up to today) as "done"
-  useEffect(() => {
-    if (!isLoaded || habits.length === 0) return;
-
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const currentDay = today.getDate();
-    
-    // Only auto-mark if we're viewing the current month
-    if (year === currentYear && month === currentMonth) {
-      const currentMonthKey = getMonthKey(currentYear, currentMonth);
-      const currentMonthRecords = records[currentMonthKey] || {};
-      
-      // Check if there are any unmarked days up to today
-      const needsAutoMark = habits.some(habit => {
-        const habitRecords = currentMonthRecords[habit.id] || {};
-        for (let d = 1; d <= currentDay; d++) {
-          if (habitRecords[d] === undefined) return true;
+    const loadState = async () => {
+      try {
+        const response = await fetch("/api/state", { cache: "no-store" });
+        if (response.status === 401) {
+          router.replace("/signin");
+          return;
         }
-        return false;
-      });
+        if (!response.ok) throw new Error("Failed to load remote state");
 
-      if (needsAutoMark) {
-        setRecords((r) => {
-          const copy = { ...r };
-          const mk = currentMonthKey;
-          copy[mk] = copy[mk] ? { ...copy[mk] } : {};
-          
-          let markedCount = 0;
-          habits.forEach(habit => {
-            const habitDays = copy[mk][habit.id] ? { ...copy[mk][habit.id] } : {};
-            // Fill empty days from day 1 up to today as "done"
-            for (let d = 1; d <= currentDay; d++) {
-              if (habitDays[d] === undefined) {
-                habitDays[d] = "done";
-                markedCount++;
-              }
-            }
-            copy[mk][habit.id] = habitDays;
-          });
-          
-          // Show notification if any habits were auto-marked
-          if (markedCount > 0) {
-            setShowAutoMarkNotification(true);
-            // Hide notification after 3 seconds
-            setTimeout(() => setShowAutoMarkNotification(false), 3000);
-          }
-          
-          return copy;
-        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (data?.configured && data.state) {
+          remoteSyncEnabledRef.current = true;
+          setCurrentUser(data.user || null);
+          const state = normalizeAppState(data.state);
+          localStorage.setItem(storageKey, JSON.stringify(state));
+          applyState(state);
+          return;
+        }
+
+        remoteSyncEnabledRef.current = false;
+      } catch (error) {
+        remoteSyncEnabledRef.current = false;
+        console.error("Remote state load failed, using local fallback:", error);
       }
-    }
-  }, [isLoaded, habits, records, year, month]);
 
-  // Persist data to localStorage
+      if (!cancelled) {
+        applyState(loadLocalState());
+      }
+    };
+
+    loadState();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  // Persist state to localStorage and Turso
   useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      const payload = { habits, records, darkMode, isHorizontalLayout };
-      localStorage.setItem(storageKey, JSON.stringify(payload));
-    }
+    if (typeof window === "undefined" || !isLoaded) return;
+
+    const payload = normalizeAppState({ habits, records, darkMode, isHorizontalLayout });
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+
+    if (!remoteSyncEnabledRef.current) return;
+
+    const timeout = setTimeout(() => {
+      fetch("/api/state", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch((error) => {
+        console.error("Remote state save failed:", error);
+      });
+    }, 350);
+
+    return () => clearTimeout(timeout);
   }, [habits, records, darkMode, isHorizontalLayout, isLoaded]);
 
   // Apply dark mode to document
@@ -332,6 +357,16 @@ export default function ConnectFourHabitTracker() {
     const d = new Date(year, month + delta, 1);
     setYear(d.getFullYear());
     setMonth(d.getMonth());
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch (error) {
+      console.error("Signout request failed:", error);
+    } finally {
+      router.replace("/signin");
+    }
   };
 
   // CSV Export/Import functions
@@ -922,6 +957,21 @@ export default function ConnectFourHabitTracker() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {currentUser && (
+                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-700 shadow-sm md:flex">
+                  <span className="font-medium">{currentUser.name}</span>
+                </div>
+              )}
+              <motion.button
+                onClick={handleSignOut}
+                className="group flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md"
+                title="Sair da conta"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm font-medium">Sair</span>
+              </motion.button>
               {/* CSV Export/Import buttons */}
               <div className="flex items-center gap-2">
                 <motion.button
@@ -1012,35 +1062,6 @@ export default function ConnectFourHabitTracker() {
             </div>
           </div>
         </motion.div>
-
-        {/* Auto-mark notification */}
-        <AnimatePresence>
-          {showAutoMarkNotification && (
-            <motion.div
-              initial={{ opacity: 0, y: -50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -50, scale: 0.9 }}
-              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-              className="mb-4"
-            >
-              <div className="mx-auto max-w-md rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4 shadow-lg ring-1 ring-emerald-200/50 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm ring-1 ring-emerald-300/50">
-                    <CheckCircle2 className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-800">
-                      Hábitos marcados automaticamente
-                    </p>
-                    <p className="text-xs text-emerald-600">
-                      Dias vazios até hoje foram marcados como cumpridos
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Tab Navigation */}
         <motion.div 
@@ -1276,7 +1297,7 @@ export default function ConnectFourHabitTracker() {
           className="mt-6 text-center"
         >
           <p className="text-xs text-slate-500">
-            💾 Os dados são salvos localmente no seu navegador (localStorage)
+            💾 Os dados são salvos no Turso (com fallback local no navegador)
           </p>
         </motion.div>
       </div>

@@ -21,12 +21,17 @@ A beautiful, interactive habit tracker built with Next.js and styled with Tailwi
 npm install
 ```
 
-2. Run the development server:
+2. Configure Turso environment variables:
+```bash
+cp .env.example .env.local
+```
+
+3. Run the development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Usage
 
@@ -39,15 +44,17 @@ npm run dev
 
 ## Tech Stack
 
-- **Next.js 14** - React framework
-- **React 18** - UI library
+- **Next.js 16** - React framework
+- **React 19** - UI library
 - **Tailwind CSS** - Styling
 - **Framer Motion** - Animations
 - **Lucide React** - Icons
+- **Turso (libSQL)** - Persistent cloud database
 
 ## Data Storage
 
-All data is stored locally in your browser's localStorage, so your habits and progress are saved between sessions.
+Data is persisted in Turso through `/api/state`.  
+If Turso env vars are not configured, the app automatically falls back to localStorage.
 
 ## License
 
