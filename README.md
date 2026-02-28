@@ -56,6 +56,25 @@ npm run dev
 Data is persisted in Turso through `/api/state`.  
 If Turso env vars are not configured, the app automatically falls back to localStorage.
 
+## Chrome Extension
+
+This repo now includes a Chrome extension popup in `chrome-extension/`.
+
+To load it in Chrome:
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select `/Users/matheuspuppe/Desktop/Projetos/habit-tracker-lig-4/chrome-extension`
+
+The extension popup lets you:
+- Sign up and sign in directly in the popup
+- Use the Netlify backend (`https://habit-tracker-lig-4.netlify.app`) for auth and state
+- Keep habit data separated per authenticated user in Turso
+- Create, edit, and remove habits
+- Navigate months and select day
+- Mark each habit as `Feito`, `Falhou`, or `Sem marcação`
+- Persist session locally with `chrome.storage.local`
+
 ## License
 
 MIT

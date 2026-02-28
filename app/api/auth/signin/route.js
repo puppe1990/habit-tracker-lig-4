@@ -41,6 +41,7 @@ export async function POST(request) {
     const session = await createSession(db, String(row.id));
     const response = NextResponse.json({
       ok: true,
+      sessionToken: session.token,
       user: {
         id: String(row.id),
         name: String(row.name),

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <img src="icons/icon32.png" alt="Habit Tracker" />
+          <div>
+            <h1>Habit Tracker</h1>
+            <p>LIG-4 no popup</p>
+          </div>
+        </div>
+        <button id="logout-btn" class="logout-btn hidden" type="button">Sair</button>
+      </header>
+
+      <section id="auth-view" class="auth-view">
+        <div class="auth-tabs">
+          <button id="tab-signin" class="auth-tab active" type="button">Entrar</button>
+          <button id="tab-signup" class="auth-tab" type="button">Criar conta</button>
+        </div>
+
+        <form id="signin-form" class="auth-form">
+          <input id="signin-email" type="email" placeholder="Email" required />
+          <input id="signin-password" type="password" placeholder="Senha" required />
+          <button type="submit">Entrar</button>
+        </form>
+
+        <form id="signup-form" class="auth-form hidden">
+          <input id="signup-name" type="text" placeholder="Nome" maxlength="60" required />
+          <input id="signup-email" type="email" placeholder="Email" required />
+          <input id="signup-password" type="password" placeholder="Senha (mínimo 6)" minlength="6" required />
+          <button type="submit">Criar conta</button>
+        </form>
+
+        <p id="auth-error" class="auth-error hidden"></p>
+      </section>
+
+      <section id="tracker-view" class="hidden">
+        <section class="month-nav">
+          <button id="prev-month" class="icon-btn" aria-label="Mês anterior">◀</button>
+          <strong id="month-label"></strong>
+          <button id="next-month" class="icon-btn" aria-label="Próximo mês">▶</button>
+        </section>
+
+        <section class="days" id="days-strip"></section>
+
+        <form id="add-habit-form" class="add-form">
+          <input id="new-habit-input" type="text" placeholder="Novo hábito" maxlength="60" required />
+          <button type="submit">Adicionar</button>
+        </form>
+
+        <section id="habits-list" class="habits-list"></section>
+      </section>
+    </main>
+
+    <template id="habit-item-template">
+      <article class="habit-item">
+        <div class="habit-header">
+          <button class="habit-name" type="button"></button>
+          <div class="habit-actions">
+            <button class="edit-btn" type="button" title="Editar">✎</button>
+            <button class="delete-btn" type="button" title="Remover">🗑</button>
+          </div>
+        </div>
+        <div class="state-row">
+          <button class="state-btn" type="button">Sem marcação</button>
+          <small class="state-hint">Clique para alternar</small>
+        </div>
+      </article>
+    </template>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

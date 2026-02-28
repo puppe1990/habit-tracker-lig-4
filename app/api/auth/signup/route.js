@@ -42,6 +42,7 @@ export async function POST(request) {
     const session = await createSession(db, userId);
     const response = NextResponse.json({
       ok: true,
+      sessionToken: session.token,
       user: { id: userId, name, email },
     });
     clearSessionCookie(response);
