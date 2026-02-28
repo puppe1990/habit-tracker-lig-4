@@ -174,64 +174,42 @@ body {
 
 .month-nav {
   display: grid;
-  grid-template-columns: 38px 1fr 38px;
+  grid-template-columns: 46px 1fr 46px;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .month-nav strong {
   text-align: center;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 800;
   color: #1e293b;
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(99, 102, 241, 0.35);
-  border-radius: 12px;
-  height: 38px;
+  border-radius: 20px;
+  height: 50px;
   display: grid;
   place-items: center;
 }
 
 .icon-btn {
-  height: 38px;
+  height: 50px;
+  width: 46px;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
   color: #475569;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .icon-btn:hover {
   background: #eef2ff;
   border-color: #a5b4fc;
   color: #4338ca;
-}
-
-.days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.day-btn {
-  border: 1px solid #dbe3f2;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #475569;
-  height: 34px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.day-btn.active {
-  background: linear-gradient(90deg, #4f46e5, #7c3aed);
-  border-color: #4f46e5;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.35);
 }
 
 .add-form {
@@ -369,4 +347,47 @@ body {
   font-size: 11px;
   color: #64748b;
   font-weight: 600;
+}
+
+.connect4-strip {
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #facc15;
+  background: linear-gradient(180deg, #fde047, #facc15);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.connect4-token {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.22);
+  background: radial-gradient(circle at 30% 25%, #f8fafc 0%, #cbd5e1 50%, #94a3b8 100%);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3);
+}
+
+.connect4-token.done {
+  background: radial-gradient(circle at 30% 25%, #86efac 0%, #22c55e 45%, #15803d 100%);
+}
+
+.connect4-token.missed {
+  background: radial-gradient(circle at 30% 25%, #fda4af 0%, #ef4444 45%, #b91c1c 100%);
+}
+
+.connect4-days {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.connect4-day {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
 }

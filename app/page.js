@@ -239,9 +239,11 @@ export default function ConnectFourHabitTracker() {
           return;
         }
 
-        remoteSyncEnabledRef.current = false;
+        if (data?.configured === false) {
+          remoteSyncEnabledRef.current = false;
+        }
       } catch (error) {
-        remoteSyncEnabledRef.current = false;
+        // Keep remote sync enabled for transient failures (5xx/network).
         console.error("Remote state load failed, using local fallback:", error);
       }
 
@@ -265,18 +267,24 @@ export default function ConnectFourHabitTracker() {
 
     if (!remoteSyncEnabledRef.current) return;
 
-    const timeout = setTimeout(() => {
-      fetch("/api/state", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }).catch((error) => {
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/state", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.status === 401) {
+          router.replace("/signin");
+        }
+      } catch (error) {
         console.error("Remote state save failed:", error);
-      });
+      }
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [habits, records, darkMode, isHorizontalLayout, isLoaded]);
+  }, [habits, records, darkMode, isHorizontalLayout, isLoaded, router]);
 
   // Apply dark mode to document
   useEffect(() => {

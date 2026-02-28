@@ -20,7 +20,6 @@ const monthNames = [
 const state = {
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
-  selectedDay: new Date().getDate(),
   sessionToken: null,
   user: null,
   habits: [],
@@ -30,7 +29,6 @@ const state = {
 let saveTimer = null;
 
 const monthLabel = document.getElementById("month-label");
-const daysStrip = document.getElementById("days-strip");
 const habitsList = document.getElementById("habits-list");
 const addHabitForm = document.getElementById("add-habit-form");
 const newHabitInput = document.getElementById("new-habit-input");
@@ -56,6 +54,30 @@ function getMonthKey(year, month) {
 
 function daysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
+}
+
+function getAnchorDay() {
+  const totalDays = daysInMonth(state.year, state.month);
+  const now = new Date();
+  const isCurrentMonth = state.year === now.getFullYear() && state.month === now.getMonth();
+  return isCurrentMonth ? Math.min(now.getDate(), totalDays) : totalDays;
+}
+
+function getConnect4WindowDays() {
+  const totalDays = daysInMonth(state.year, state.month);
+  const anchorDay = getAnchorDay();
+  const startDay = Math.max(1, anchorDay - 6);
+  const windowDays = [];
+
+  for (let day = startDay; day <= startDay + 6; day += 1) {
+    if (day <= totalDays) windowDays.push(day);
+  }
+
+  while (windowDays.length < 7) {
+    windowDays.push(null);
+  }
+
+  return windowDays;
 }
 
 function setAuthError(message) {
@@ -169,19 +191,20 @@ async function loadRemoteState() {
 }
 
 function getCurrentCellState(habitId) {
+  const anchorDay = getAnchorDay();
   const mk = getMonthKey(state.year, state.month);
-  return state.records?.[mk]?.[habitId]?.[state.selectedDay];
+  return state.records?.[mk]?.[habitId]?.[anchorDay];
 }
 
-function setCurrentCellState(habitId, value) {
+function setCurrentCellState(habitId, day, value) {
   const mk = getMonthKey(state.year, state.month);
   const monthMap = state.records[mk] ? { ...state.records[mk] } : {};
   const habitMap = monthMap[habitId] ? { ...monthMap[habitId] } : {};
 
   if (value === undefined) {
-    delete habitMap[state.selectedDay];
+    delete habitMap[day];
   } else {
-    habitMap[state.selectedDay] = value;
+    habitMap[day] = value;
   }
 
   monthMap[habitId] = habitMap;
@@ -199,29 +222,7 @@ function changeMonth(delta) {
   state.year = date.getFullYear();
   state.month = date.getMonth();
 
-  const maxDay = daysInMonth(state.year, state.month);
-  if (state.selectedDay > maxDay) {
-    state.selectedDay = maxDay;
-  }
-
   render();
-}
-
-function renderDays() {
-  daysStrip.textContent = "";
-  const totalDays = daysInMonth(state.year, state.month);
-
-  for (let day = 1; day <= totalDays; day += 1) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `day-btn ${day === state.selectedDay ? "active" : ""}`;
-    button.textContent = day;
-    button.addEventListener("click", () => {
-      state.selectedDay = day;
-      render();
-    });
-    daysStrip.appendChild(button);
-  }
 }
 
 function setStateButtonAppearance(button, value) {
@@ -241,6 +242,44 @@ function setStateButtonAppearance(button, value) {
 
   button.classList.add("state-empty");
   button.textContent = "Sem marcação";
+}
+
+function renderConnect4Strip(daysContainer, tokensContainer, habitId) {
+  daysContainer.textContent = "";
+  tokensContainer.textContent = "";
+  const totalDays = daysInMonth(state.year, state.month);
+  const daysWindow = getConnect4WindowDays();
+  const mk = getMonthKey(state.year, state.month);
+  const habitRecords = state.records?.[mk]?.[habitId] || {};
+
+  for (let index = 0; index < daysWindow.length; index += 1) {
+    const day = daysWindow[index];
+    const dayLabel = document.createElement("div");
+    dayLabel.className = "connect4-day";
+    dayLabel.textContent = day ? String(day) : "·";
+    daysContainer.appendChild(dayLabel);
+
+    const token = document.createElement("div");
+    token.className = "connect4-token";
+
+    if (day && day <= totalDays) {
+      const value = habitRecords[day];
+      if (value === "done") token.classList.add("done");
+      if (value === "missed") token.classList.add("missed");
+      token.title = `Dia ${day}: ${value === "done" ? "feito" : value === "missed" ? "falhou" : "sem marcação"}`;
+      token.addEventListener("click", () => {
+        const current = habitRecords[day];
+        const next = cycleValue(current);
+        setCurrentCellState(habitId, day, next);
+        scheduleRemoteSave();
+        renderHabits();
+      });
+    } else {
+      token.title = "Fora do mês";
+    }
+
+    tokensContainer.appendChild(token);
+  }
 }
 
 function scheduleRemoteSave() {
@@ -293,6 +332,8 @@ function renderHabits() {
     const editButton = node.querySelector(".edit-btn");
     const deleteButton = node.querySelector(".delete-btn");
     const stateButton = node.querySelector(".state-btn");
+    const connect4Days = node.querySelector(".connect4-days");
+    const connect4Strip = node.querySelector(".connect4-strip");
 
     nameButton.textContent = habit.name;
     nameButton.title = habit.name;
@@ -303,7 +344,7 @@ function renderHabits() {
 
     stateButton.addEventListener("click", () => {
       const next = cycleValue(getCurrentCellState(habit.id));
-      setCurrentCellState(habit.id, next);
+      setCurrentCellState(habit.id, getAnchorDay(), next);
       scheduleRemoteSave();
       updateStateButton();
     });
@@ -339,6 +380,7 @@ function renderHabits() {
     });
 
     updateStateButton();
+    renderConnect4Strip(connect4Days, connect4Strip, habit.id);
     habitsList.appendChild(node);
   }
 }
@@ -348,7 +390,6 @@ function render() {
   if (!state.user || !state.sessionToken) return;
 
   monthLabel.textContent = `${monthNames[state.month]} ${state.year}`;
-  renderDays();
   renderHabits();
 }
 
@@ -480,11 +521,6 @@ async function bootstrapSession() {
 }
 
 async function bootstrap() {
-  const maxDay = daysInMonth(state.year, state.month);
-  if (state.selectedDay > maxDay) {
-    state.selectedDay = maxDay;
-  }
-
   setupAuthEvents();
   setupTrackerEvents();
   setAuthMode("signin");
