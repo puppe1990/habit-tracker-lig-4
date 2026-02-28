@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server";
 import { clearSessionCookie, deleteSessionFromRequest } from "../../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { corsJson, corsPreflight } from "../../../../lib/cors";
+
+const CORS_METHODS = "POST, OPTIONS";
+
+export function OPTIONS(request) {
+  return corsPreflight(request, CORS_METHODS);
+}
 
 export async function POST(request) {
   if (!isTursoConfigured()) {
-    const response = NextResponse.json({ ok: true });
+    const response = corsJson(request, { ok: true }, undefined, CORS_METHODS);
     clearSessionCookie(response);
     return response;
   }
@@ -17,7 +23,7 @@ export async function POST(request) {
     console.error("Signout cleanup failed:", error);
   }
 
-  const response = NextResponse.json({ ok: true });
+  const response = corsJson(request, { ok: true }, undefined, CORS_METHODS);
   clearSessionCookie(response);
   return response;
 }

@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { corsJson, corsPreflight } from "../../../../lib/cors";
+
+const CORS_METHODS = "GET, OPTIONS";
+
+export function OPTIONS(request) {
+  return corsPreflight(request, CORS_METHODS);
+}
 
 export async function GET(request) {
   if (!isTursoConfigured()) {
-    return NextResponse.json({ configured: false, user: null });
+    return corsJson(request, { configured: false, user: null }, undefined, CORS_METHODS);
   }
 
   try {
@@ -12,12 +18,12 @@ export async function GET(request) {
     const db = getTursoClient();
     const user = await getUserFromRequest(db, request);
     if (!user) {
-      return NextResponse.json({ configured: true, user: null }, { status: 401 });
+      return corsJson(request, { configured: true, user: null }, { status: 401 }, CORS_METHODS);
     }
 
-    return NextResponse.json({ configured: true, user });
+    return corsJson(request, { configured: true, user }, undefined, CORS_METHODS);
   } catch (error) {
     console.error("Failed to get current user:", error);
-    return NextResponse.json({ error: "Falha ao buscar usuário" }, { status: 500 });
+    return corsJson(request, { error: "Falha ao buscar usuário" }, { status: 500 }, CORS_METHODS);
   }
 }

@@ -1,11 +1,17 @@
 import crypto from "node:crypto";
-import { NextResponse } from "next/server";
 import { clearSessionCookie, createSession, hashPassword, setSessionCookie } from "../../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { corsJson, corsPreflight } from "../../../../lib/cors";
+
+const CORS_METHODS = "POST, OPTIONS";
+
+export function OPTIONS(request) {
+  return corsPreflight(request, CORS_METHODS);
+}
 
 export async function POST(request) {
   if (!isTursoConfigured()) {
-    return NextResponse.json({ error: "Turso is not configured" }, { status: 503 });
+    return corsJson(request, { error: "Turso is not configured" }, { status: 503 }, CORS_METHODS);
   }
 
   try {
@@ -15,11 +21,21 @@ export async function POST(request) {
     const password = String(body?.password || "");
 
     if (!name || !email || !password) {
-      return NextResponse.json({ error: "Nome, email e senha são obrigatórios" }, { status: 400 });
+      return corsJson(
+        request,
+        { error: "Nome, email e senha são obrigatórios" },
+        { status: 400 },
+        CORS_METHODS,
+      );
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ error: "A senha precisa ter pelo menos 6 caracteres" }, { status: 400 });
+      return corsJson(
+        request,
+        { error: "A senha precisa ter pelo menos 6 caracteres" },
+        { status: 400 },
+        CORS_METHODS,
+      );
     }
 
     await ensureSchema();
@@ -30,7 +46,7 @@ export async function POST(request) {
       args: [email],
     });
     if (existing.rows.length) {
-      return NextResponse.json({ error: "Este email já está cadastrado" }, { status: 409 });
+      return corsJson(request, { error: "Este email já está cadastrado" }, { status: 409 }, CORS_METHODS);
     }
 
     const userId = crypto.randomUUID();
@@ -40,16 +56,16 @@ export async function POST(request) {
     });
 
     const session = await createSession(db, userId);
-    const response = NextResponse.json({
+    const response = corsJson(request, {
       ok: true,
       sessionToken: session.token,
       user: { id: userId, name, email },
-    });
+    }, undefined, CORS_METHODS);
     clearSessionCookie(response);
     setSessionCookie(response, session.token, session.expiresAt);
     return response;
   } catch (error) {
     console.error("Signup failed:", error);
-    return NextResponse.json({ error: "Falha ao criar conta" }, { status: 500 });
+    return corsJson(request, { error: "Falha ao criar conta" }, { status: 500 }, CORS_METHODS);
   }
 }

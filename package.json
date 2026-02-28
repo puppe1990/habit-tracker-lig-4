@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "generate-icons": "open generate-icons.html",
-    "generate-favicon": "open create-favicon.html"
+    "generate-favicon": "open create-favicon.html",
+    "extension:css": "tailwindcss -c tailwind.extension.config.js -i ./chrome-extension/popup.tailwind.css -o ./chrome-extension/popup.css",
+    "extension:css:watch": "tailwindcss -c tailwind.extension.config.js -i ./chrome-extension/popup.tailwind.css -o ./chrome-extension/popup.css --watch"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",

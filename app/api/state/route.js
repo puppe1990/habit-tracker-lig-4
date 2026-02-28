@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../lib/turso";
+import { corsJson, corsPreflight } from "../../../lib/cors";
 
 const DEFAULT_STATE = {
   habits: [],
@@ -17,9 +17,15 @@ const normalizeState = (value = {}) => ({
     value.isHorizontalLayout === undefined ? true : Boolean(value.isHorizontalLayout),
 });
 
+const CORS_METHODS = "GET, PUT, OPTIONS";
+
+export function OPTIONS(request) {
+  return corsPreflight(request, CORS_METHODS);
+}
+
 export async function GET(request) {
   if (!isTursoConfigured()) {
-    return NextResponse.json({ configured: false, state: null });
+    return corsJson(request, { configured: false, state: null }, undefined, CORS_METHODS);
   }
 
   try {
@@ -27,7 +33,12 @@ export async function GET(request) {
     const db = getTursoClient();
     const user = await getUserFromRequest(db, request);
     if (!user) {
-      return NextResponse.json({ configured: true, authenticated: false }, { status: 401 });
+      return corsJson(
+        request,
+        { configured: true, authenticated: false },
+        { status: 401 },
+        CORS_METHODS,
+      );
     }
 
     const result = await db.execute({
@@ -36,26 +47,36 @@ export async function GET(request) {
     });
 
     if (!result.rows.length) {
-      return NextResponse.json({ configured: true, authenticated: true, user, state: DEFAULT_STATE });
+      return corsJson(
+        request,
+        { configured: true, authenticated: true, user, state: DEFAULT_STATE },
+        undefined,
+        CORS_METHODS,
+      );
     }
 
     const row = result.rows[0];
     const payload = typeof row.payload === "string" ? JSON.parse(row.payload) : DEFAULT_STATE;
-    return NextResponse.json({
-      configured: true,
-      authenticated: true,
-      user,
-      state: normalizeState(payload),
-    });
+    return corsJson(
+      request,
+      {
+        configured: true,
+        authenticated: true,
+        user,
+        state: normalizeState(payload),
+      },
+      undefined,
+      CORS_METHODS,
+    );
   } catch (error) {
     console.error("Failed to load Turso state:", error);
-    return NextResponse.json({ error: "Failed to load state" }, { status: 500 });
+    return corsJson(request, { error: "Failed to load state" }, { status: 500 }, CORS_METHODS);
   }
 }
 
 export async function PUT(request) {
   if (!isTursoConfigured()) {
-    return NextResponse.json({ error: "Turso is not configured" }, { status: 503 });
+    return corsJson(request, { error: "Turso is not configured" }, { status: 503 }, CORS_METHODS);
   }
 
   try {
@@ -66,7 +87,12 @@ export async function PUT(request) {
     const db = getTursoClient();
     const user = await getUserFromRequest(db, request);
     if (!user) {
-      return NextResponse.json({ configured: true, authenticated: false }, { status: 401 });
+      return corsJson(
+        request,
+        { configured: true, authenticated: false },
+        { status: 401 },
+        CORS_METHODS,
+      );
     }
 
     await db.execute({
@@ -80,9 +106,9 @@ export async function PUT(request) {
       args: [user.id, JSON.stringify(state)],
     });
 
-    return NextResponse.json({ ok: true });
+    return corsJson(request, { ok: true }, undefined, CORS_METHODS);
   } catch (error) {
     console.error("Failed to save Turso state:", error);
-    return NextResponse.json({ error: "Failed to save state" }, { status: 500 });
+    return corsJson(request, { error: "Failed to save state" }, { status: 500 }, CORS_METHODS);
   }
 }

@@ -20,6 +20,7 @@ const monthNames = [
 const state = {
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
+  activeTab: "tracker",
   sessionToken: null,
   user: null,
   habits: [],
@@ -43,6 +44,12 @@ const tabSignin = document.getElementById("tab-signin");
 const tabSignup = document.getElementById("tab-signup");
 const signinForm = document.getElementById("signin-form");
 const signupForm = document.getElementById("signup-form");
+const tabTracker = document.getElementById("tab-tracker");
+const tabSummary = document.getElementById("tab-summary");
+const trackerPanel = document.getElementById("tracker-panel");
+const summaryPanel = document.getElementById("summary-panel");
+const summaryOverview = document.getElementById("summary-overview");
+const summaryList = document.getElementById("summary-list");
 
 function pad(value) {
   return value < 10 ? `0${value}` : String(value);
@@ -99,6 +106,15 @@ function setAuthMode(mode) {
   setAuthError("");
 }
 
+function setTrackerMode(mode) {
+  if (!tabTracker || !tabSummary || !trackerPanel || !summaryPanel) return;
+  state.activeTab = mode === "summary" ? "summary" : "tracker";
+  tabTracker.classList.toggle("active", state.activeTab === "tracker");
+  tabSummary.classList.toggle("active", state.activeTab === "summary");
+  trackerPanel.classList.toggle("hidden", state.activeTab !== "tracker");
+  summaryPanel.classList.toggle("hidden", state.activeTab !== "summary");
+}
+
 function updateViewBySession() {
   const loggedIn = Boolean(state.user && state.sessionToken);
   authView.classList.toggle("hidden", loggedIn);
@@ -106,7 +122,9 @@ function updateViewBySession() {
   logoutBtn.classList.toggle("hidden", !loggedIn);
 
   const subtitle = document.querySelector(".brand p");
-  subtitle.textContent = loggedIn ? `Logado como ${state.user.name}` : "LIG-4 no popup";
+  if (subtitle) {
+    subtitle.textContent = loggedIn ? `Logado como ${state.user.name}` : "LIG-4 no popup";
+  }
 }
 
 function loadStorage() {
@@ -282,6 +300,123 @@ function renderConnect4Strip(daysContainer, tokensContainer, habitId) {
   }
 }
 
+function getMonthRecordsForHabit(habitId) {
+  const mk = getMonthKey(state.year, state.month);
+  return state.records?.[mk]?.[habitId] || {};
+}
+
+function getMonthStatsForHabit(habitId) {
+  const records = getMonthRecordsForHabit(habitId);
+  const totalDays = daysInMonth(state.year, state.month);
+  let done = 0;
+  let missed = 0;
+  let marked = 0;
+  let currentStreak = 0;
+  let bestStreak = 0;
+
+  for (let day = 1; day <= totalDays; day += 1) {
+    const value = records[day];
+    if (value === "done") {
+      done += 1;
+      marked += 1;
+      currentStreak += 1;
+      if (currentStreak > bestStreak) bestStreak = currentStreak;
+      continue;
+    }
+    if (value === "missed") {
+      missed += 1;
+      marked += 1;
+    }
+    currentStreak = 0;
+  }
+
+  return {
+    done,
+    missed,
+    marked,
+    totalDays,
+    rate: marked ? Math.round((done / marked) * 100) : 0,
+    bestStreak,
+  };
+}
+
+function renderSummary() {
+  summaryOverview.textContent = "";
+  summaryList.textContent = "";
+
+  if (state.habits.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Sem hábitos para resumir neste mês.";
+    summaryList.appendChild(empty);
+    return;
+  }
+
+  let totalDone = 0;
+  let totalMissed = 0;
+  let totalMarked = 0;
+  let bestStreakOverall = 0;
+
+  for (const habit of state.habits) {
+    const stats = getMonthStatsForHabit(habit.id);
+    totalDone += stats.done;
+    totalMissed += stats.missed;
+    totalMarked += stats.marked;
+    if (stats.bestStreak > bestStreakOverall) bestStreakOverall = stats.bestStreak;
+
+    const item = document.createElement("article");
+    item.className = "summary-item";
+    const title = document.createElement("h3");
+    title.className = "summary-item-title";
+    title.textContent = habit.name;
+    item.appendChild(title);
+
+    const metrics = document.createElement("div");
+    metrics.className = "summary-metrics";
+    const habitMetrics = [
+      { label: "Feitos", value: String(stats.done) },
+      { label: "Falhas", value: String(stats.missed) },
+      { label: "Taxa", value: `${stats.rate}%` },
+      { label: "Melhor sequência", value: String(stats.bestStreak) },
+    ];
+    for (const metric of habitMetrics) {
+      const metricNode = document.createElement("div");
+      metricNode.className = "summary-metric";
+      const labelNode = document.createElement("div");
+      labelNode.className = "summary-metric-label";
+      labelNode.textContent = metric.label;
+      const valueNode = document.createElement("div");
+      valueNode.className = "summary-metric-value";
+      valueNode.textContent = metric.value;
+      metricNode.append(labelNode, valueNode);
+      metrics.appendChild(metricNode);
+    }
+    item.appendChild(metrics);
+    summaryList.appendChild(item);
+  }
+
+  const accuracy = totalMarked ? Math.round((totalDone / totalMarked) * 100) : 0;
+  const overviewCards = [
+    { label: "Feitos", value: String(totalDone) },
+    { label: "Falhas", value: String(totalMissed) },
+    { label: "Taxa geral", value: `${accuracy}%` },
+    { label: "Melhor sequência", value: String(bestStreakOverall) },
+  ];
+
+  for (const card of overviewCards) {
+    const cardNode = document.createElement("article");
+    cardNode.className = "summary-card";
+    const labelNode = document.createElement("div");
+    labelNode.className = "summary-card-label";
+    labelNode.textContent = card.label;
+    const valueNode = document.createElement("div");
+    valueNode.className = "summary-card-value";
+    valueNode.textContent = card.value;
+    cardNode.append(labelNode, valueNode);
+    summaryOverview.appendChild(cardNode);
+  }
+}
+
 function scheduleRemoteSave() {
   persistStorage();
   if (saveTimer) clearTimeout(saveTimer);
@@ -390,10 +525,22 @@ function render() {
   if (!state.user || !state.sessionToken) return;
 
   monthLabel.textContent = `${monthNames[state.month]} ${state.year}`;
+  setTrackerMode(state.activeTab);
   renderHabits();
+  renderSummary();
 }
 
 function setupTrackerEvents() {
+  if (tabTracker && tabSummary) {
+    tabTracker.addEventListener("click", () => {
+      setTrackerMode("tracker");
+    });
+    tabSummary.addEventListener("click", () => {
+      setTrackerMode("summary");
+      renderSummary();
+    });
+  }
+
   document.getElementById("prev-month").addEventListener("click", () => changeMonth(-1));
   document.getElementById("next-month").addEventListener("click", () => changeMonth(1));
 

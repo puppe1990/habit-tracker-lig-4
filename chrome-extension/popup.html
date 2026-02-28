@@ -42,18 +42,30 @@
       </section>
 
       <section id="tracker-view" class="hidden">
+        <div class="tracker-tabs">
+          <button id="tab-tracker" class="tracker-tab active" type="button">Hábitos</button>
+          <button id="tab-summary" class="tracker-tab" type="button">Resumo</button>
+        </div>
+
         <section class="month-nav">
           <button id="prev-month" class="icon-btn" aria-label="Mês anterior">◀</button>
           <strong id="month-label"></strong>
           <button id="next-month" class="icon-btn" aria-label="Próximo mês">▶</button>
         </section>
 
-        <form id="add-habit-form" class="add-form">
-          <input id="new-habit-input" type="text" placeholder="Novo hábito" maxlength="60" required />
-          <button type="submit">Adicionar</button>
-        </form>
+        <section id="tracker-panel">
+          <form id="add-habit-form" class="add-form">
+            <input id="new-habit-input" type="text" placeholder="Novo hábito" maxlength="60" required />
+            <button type="submit">Adicionar</button>
+          </form>
 
-        <section id="habits-list" class="habits-list"></section>
+          <section id="habits-list" class="habits-list"></section>
+        </section>
+
+        <section id="summary-panel" class="summary-panel hidden">
+          <section id="summary-overview" class="summary-overview"></section>
+          <section id="summary-list" class="summary-list"></section>
+        </section>
       </section>
     </main>
 

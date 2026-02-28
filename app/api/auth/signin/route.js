@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import {
   clearSessionCookie,
   createSession,
@@ -6,10 +5,17 @@ import {
   verifyPassword,
 } from "../../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { corsJson, corsPreflight } from "../../../../lib/cors";
+
+const CORS_METHODS = "POST, OPTIONS";
+
+export function OPTIONS(request) {
+  return corsPreflight(request, CORS_METHODS);
+}
 
 export async function POST(request) {
   if (!isTursoConfigured()) {
-    return NextResponse.json({ error: "Turso is not configured" }, { status: 503 });
+    return corsJson(request, { error: "Turso is not configured" }, { status: 503 }, CORS_METHODS);
   }
 
   try {
@@ -18,7 +24,12 @@ export async function POST(request) {
     const password = String(body?.password || "");
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email e senha são obrigatórios" }, { status: 400 });
+      return corsJson(
+        request,
+        { error: "Email e senha são obrigatórios" },
+        { status: 400 },
+        CORS_METHODS,
+      );
     }
 
     await ensureSchema();
@@ -29,17 +40,17 @@ export async function POST(request) {
     });
 
     if (!result.rows.length) {
-      return NextResponse.json({ error: "Email ou senha inválidos" }, { status: 401 });
+      return corsJson(request, { error: "Email ou senha inválidos" }, { status: 401 }, CORS_METHODS);
     }
 
     const row = result.rows[0];
     const valid = verifyPassword(password, String(row.password_hash));
     if (!valid) {
-      return NextResponse.json({ error: "Email ou senha inválidos" }, { status: 401 });
+      return corsJson(request, { error: "Email ou senha inválidos" }, { status: 401 }, CORS_METHODS);
     }
 
     const session = await createSession(db, String(row.id));
-    const response = NextResponse.json({
+    const response = corsJson(request, {
       ok: true,
       sessionToken: session.token,
       user: {
@@ -47,12 +58,12 @@ export async function POST(request) {
         name: String(row.name),
         email: String(row.email),
       },
-    });
+    }, undefined, CORS_METHODS);
     clearSessionCookie(response);
     setSessionCookie(response, session.token, session.expiresAt);
     return response;
   } catch (error) {
     console.error("Signin failed:", error);
-    return NextResponse.json({ error: "Falha ao autenticar" }, { status: 500 });
+    return corsJson(request, { error: "Falha ao autenticar" }, { status: 500 }, CORS_METHODS);
   }
 }
