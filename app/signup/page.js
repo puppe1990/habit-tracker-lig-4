@@ -82,7 +82,7 @@ export default function SignupPage() {
           <label htmlFor="signup-password" className="mb-1 block text-sm font-medium text-white/80">
             Senha
           </label>
-          <div className="flex items-center gap-1 rounded-[14px] border border-[var(--panel-border)] bg-black/25 pr-1 focus-within:border-gold focus-within:ring-4 focus-within:ring-[color-mix(in_srgb,var(--disc-done)_28%,transparent)]">
+          <div className="flex items-center gap-1 rounded-[14px] border border-[var(--panel-border)] bg-black/25 pr-1 focus-within:border-gold focus-within:ring-4 focus-within:ring-[color-mix(in_srgb,var(--gold)_28%,transparent)]">
             <input
               id="signup-password"
               type={showPassword ? "text" : "password"}

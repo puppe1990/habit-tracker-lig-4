@@ -12,7 +12,7 @@ export default function CalendarFooter({ onClearMonth }) {
     >
       <p className="max-w-prose text-sm text-muted">
         Clique no buraco para alternar entre{" "}
-        <span className="font-semibold text-ink">amarelo (feito)</span> e{" "}
+        <span className="font-semibold text-ink">verde (feito)</span> e{" "}
         <span className="font-semibold text-ink">vermelho (falhou)</span>. Botão direito tira o
         disco.
       </p>

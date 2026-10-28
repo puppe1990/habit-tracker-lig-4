@@ -27,7 +27,7 @@ export default function EmptyState({ onAdd }) {
       <p className="font-display text-sm tracking-[0.28em] text-gold">PRIMEIRA JOGADA</p>
       <h3 className="mt-2 font-display text-4xl uppercase tracking-wide">O tabuleiro está vazio</h3>
       <p className="mx-auto mt-3 max-w-md text-sm text-white/75">
-        Crie uma linha de hábito. Cada dia é um buraco. Amarelo encaixa, vermelho cai do outro lado.
+        Crie uma linha de hábito. Cada dia é um buraco. Verde encaixa, vermelho cai do outro lado.
       </p>
       <div className="mt-8">
         <AddHabitForm onAdd={onAdd} emphasis />
