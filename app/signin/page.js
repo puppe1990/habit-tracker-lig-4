@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import AuthFrame from "../components/habits/AuthFrame";
 
 export default function SigninPage() {
   const router = useRouter();
@@ -41,84 +41,64 @@ export default function SigninPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-2xl backdrop-blur-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-            <LogIn className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Entrar</h1>
-            <p className="text-sm text-slate-600">Acesse sua conta para ver seus hábitos</p>
+    <AuthFrame
+      title="Entrar"
+      subtitle="Sente à mesa e continue o jogo."
+      footerLabel="Ainda não tem conta?"
+      footerHref="/signup"
+      footerCta="Criar conta"
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="signin-email" className="mb-1 block text-sm font-medium text-white/80">
+            Email
+          </label>
+          <input
+            id="signin-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="field bg-black/25 text-white placeholder:text-white/35"
+            placeholder="seu@email.com"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="signin-password" className="mb-1 block text-sm font-medium text-white/80">
+            Senha
+          </label>
+          <div className="flex items-center gap-1 rounded-[14px] border border-[var(--panel-border)] bg-black/25 pr-1 focus-within:border-gold focus-within:ring-4 focus-within:ring-[color-mix(in_srgb,var(--disc-done)_28%,transparent)]">
+            <input
+              id="signin-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35"
+              placeholder="Sua senha"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/10 hover:text-white"
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="signin-email" className="mb-1 block text-sm font-medium text-slate-700">
-              Email
-            </label>
-            <input
-              id="signin-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-indigo-500/20 transition focus:border-indigo-500 focus:ring-4"
-              placeholder="seu@email.com"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="signin-password"
-              className="mb-1 block text-sm font-medium text-slate-700"
-            >
-              Senha
-            </label>
-            <div className="flex items-center gap-1 rounded-xl border border-slate-300 bg-white pr-1 transition focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20">
-              <input
-                id="signin-password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border-0 px-3 py-2.5 text-sm outline-none"
-                placeholder="Sua senha"
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+        {error && (
+          <p className="rounded-xl bg-disc-missed/15 px-3 py-2 text-sm text-[#ffb4ac] ring-1 ring-disc-missed/30">
+            {error}
+          </p>
+        )}
 
-          {error && (
-            <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-indigo-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-600">
-          Ainda não tem conta?{" "}
-          <Link className="font-semibold text-indigo-600 hover:text-indigo-700" href="/signup">
-            Criar conta
-          </Link>
-        </p>
-      </div>
-    </main>
+        <button type="submit" disabled={loading} className="btn-gold w-full py-2.5 text-sm">
+          {loading ? "Entrando..." : "Sentar à mesa"}
+        </button>
+      </form>
+    </AuthFrame>
   );
 }

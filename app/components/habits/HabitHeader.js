@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Edit2, Trash2, XCircle } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function HabitHeader({ habit, stats, onRename, onRemove }) {
   const [editing, setEditing] = useState(false);
@@ -20,7 +20,7 @@ export default function HabitHeader({ habit, stats, onRename, onRemove }) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2.5">
       {editing ? (
         <input
           ref={inputRef}
@@ -34,42 +34,39 @@ export default function HabitHeader({ habit, stats, onRename, onRemove }) {
               setEditing(false);
             }
           }}
-          className="w-full rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 text-sm font-medium shadow-sm ring-1 ring-slate-200/50 backdrop-blur-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+          className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white outline-none ring-0 focus:border-gold"
         />
       ) : (
         <button
-          className="group flex w-full items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-left text-sm font-semibold backdrop-blur-sm transition-all hover:bg-white hover:shadow-md"
+          className="group flex w-full items-center justify-between rounded-xl px-1 text-left text-sm font-semibold text-white"
           onClick={() => setEditing(true)}
           title="Editar nome do hábito"
         >
-          <span className="truncate text-slate-800">{habit.name}</span>
-          <Edit2 className="ml-2 h-4 w-4 text-slate-400 transition-colors group-hover:text-indigo-500" />
+          <span className="truncate">{habit.name}</span>
+          <Pencil className="ml-2 h-3.5 w-3.5 text-white/40 transition-colors group-hover:text-gold" />
         </button>
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700 ring-1 ring-emerald-200/50">
-            <CheckCircle2 className="h-3 w-3" />
-            <span className="font-semibold">{stats.done}</span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-1 text-red-700 ring-1 ring-red-200/50">
-            <XCircle className="h-3 w-3" />
-            <span className="font-semibold">{stats.missed}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 px-2 py-1 text-[10px] font-bold text-indigo-700 ring-1 ring-indigo-200/50">
-            {stats.pct}%
+        <div className="flex items-center gap-1.5 text-[11px] font-bold">
+          <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2 py-0.5">
+            <span className="disc disc-done !h-2.5 !w-2.5" />
+            {stats.done}
           </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2 py-0.5 text-white/80">
+            <span className="disc disc-missed !h-2.5 !w-2.5" />
+            {stats.missed}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-display text-sm tracking-wider text-gold">{stats.pct}%</span>
           <motion.button
             onClick={() => onRemove(habit.id)}
-            className="rounded-xl border border-red-200 bg-red-50 p-1.5 text-red-600 transition-all hover:bg-red-100 hover:shadow-sm"
+            className="rounded-lg p-1.5 text-white/50 transition hover:bg-black/25 hover:text-disc-missed"
             title="Remover hábito"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.92 }}
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-3.5 w-3.5" />
           </motion.button>
         </div>
       </div>

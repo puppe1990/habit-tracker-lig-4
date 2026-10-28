@@ -1,32 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle } from "lucide-react";
+
+const ITEMS = [
+  { key: "done", label: "Feito", disc: "disc disc-done" },
+  { key: "missed", label: "Falhou", disc: "disc disc-missed" },
+  { key: "empty", label: "Sem jogada", disc: "legend-void" },
+];
 
 export default function CalendarLegend() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="mb-6 flex flex-wrap items-center gap-3"
+      transition={{ duration: 0.35 }}
+      className="mb-6 flex flex-wrap items-center gap-2"
     >
-      <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 shadow-sm ring-1 ring-emerald-200/50">
-        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm ring-1 ring-emerald-300/50">
-          <CheckCircle2 className="h-2.5 w-2.5 text-white" />
+      {ITEMS.map((item) => (
+        <div
+          key={item.key}
+          className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-3 py-1.5 text-sm text-ink"
+        >
+          <span className={`${item.disc} !h-4 !w-4`} />
+          <span className="font-medium">{item.label}</span>
         </div>
-        <span className="text-sm font-medium text-emerald-700">Cumprido</span>
-      </div>
-      <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3 shadow-sm ring-1 ring-red-200/50">
-        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm ring-1 ring-red-300/50">
-          <XCircle className="h-2.5 w-2.5 text-white" />
-        </div>
-        <span className="text-sm font-medium text-red-700">Não cumprido</span>
-      </div>
-      <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-50 to-gray-50 px-4 py-3 shadow-sm ring-1 ring-slate-200/50">
-        <div className="h-4 w-4 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 shadow-sm ring-1 ring-slate-300/50" />
-        <span className="text-sm font-medium text-slate-600">Sem marcação</span>
-      </div>
+      ))}
+      <p className="ml-1 text-xs text-muted">Hoje leva o anel dourado no buraco.</p>
     </motion.div>
   );
 }

@@ -1,11 +1,11 @@
 {
-  "name": "Habit Tracker - Lig-4 Style",
-  "short_name": "Habit Tracker",
-  "description": "Interactive habit tracker with Connect 4 style visualization",
+  "name": "LIG-4 — Hábitos",
+  "short_name": "LIG-4",
+  "description": "Marque o dia. Encaixe o disco. Quatro em linha com a sua rotina.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "background_color": "#070e18",
+  "theme_color": "#1658c9",
   "orientation": "portrait-primary",
   "icons": [
     {
