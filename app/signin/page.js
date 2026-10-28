@@ -55,8 +55,11 @@ export default function SigninPage() {
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+            <label htmlFor="signin-email" className="mb-1 block text-sm font-medium text-slate-700">
+              Email
+            </label>
             <input
+              id="signin-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -66,20 +69,27 @@ export default function SigninPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
-            <div className="relative">
+            <label
+              htmlFor="signin-password"
+              className="mb-1 block text-sm font-medium text-slate-700"
+            >
+              Senha
+            </label>
+            <div className="flex items-center gap-1 rounded-xl border border-slate-300 bg-white pr-1 transition focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20">
               <input
+                id="signin-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm outline-none ring-indigo-500/20 transition focus:border-indigo-500 focus:ring-4"
+                className="w-full rounded-xl border-0 px-3 py-2.5 text-sm outline-none"
                 placeholder="Sua senha"
+                autoComplete="current-password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-700"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

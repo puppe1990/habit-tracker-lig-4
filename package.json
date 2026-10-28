@@ -7,10 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run format:check && npm run lint && npm run test && npm run build",
+    "prepare": "husky || true",
     "generate-icons": "open generate-icons.html",
     "generate-favicon": "open create-favicon.html",
     "extension:css": "tailwindcss -c tailwind.extension.config.js -i ./chrome-extension/popup.tailwind.css -o ./chrome-extension/popup.css",
     "extension:css:watch": "tailwindcss -c tailwind.extension.config.js -i ./chrome-extension/popup.tailwind.css -o ./chrome-extension/popup.css --watch"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,json,css,md,html,yml,yaml}": "prettier --write",
+    "*.{js,mjs,cjs,jsx}": "eslint --fix"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
@@ -21,10 +31,16 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.3",
     "eslint-config-next": "16.1.6",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6"
+    "prettier": "^3.9.10",
+    "tailwindcss": "^3.3.6",
+    "vitest": "^5.0.5"
   }
 }

@@ -20,7 +20,9 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const email = String(body?.email || "").trim().toLowerCase();
+    const email = String(body?.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(body?.password || "");
 
     if (!email || !password) {
@@ -40,25 +42,40 @@ export async function POST(request) {
     });
 
     if (!result.rows.length) {
-      return corsJson(request, { error: "Email ou senha inválidos" }, { status: 401 }, CORS_METHODS);
+      return corsJson(
+        request,
+        { error: "Email ou senha inválidos" },
+        { status: 401 },
+        CORS_METHODS,
+      );
     }
 
     const row = result.rows[0];
     const valid = verifyPassword(password, String(row.password_hash));
     if (!valid) {
-      return corsJson(request, { error: "Email ou senha inválidos" }, { status: 401 }, CORS_METHODS);
+      return corsJson(
+        request,
+        { error: "Email ou senha inválidos" },
+        { status: 401 },
+        CORS_METHODS,
+      );
     }
 
     const session = await createSession(db, String(row.id));
-    const response = corsJson(request, {
-      ok: true,
-      sessionToken: session.token,
-      user: {
-        id: String(row.id),
-        name: String(row.name),
-        email: String(row.email),
+    const response = corsJson(
+      request,
+      {
+        ok: true,
+        sessionToken: session.token,
+        user: {
+          id: String(row.id),
+          name: String(row.name),
+          email: String(row.email),
+        },
       },
-    }, undefined, CORS_METHODS);
+      undefined,
+      CORS_METHODS,
+    );
     clearSessionCookie(response);
     setSessionCookie(response, session.token, session.expiresAt);
     return response;

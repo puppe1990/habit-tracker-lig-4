@@ -1,27 +1,27 @@
-import './globals.css'
+import "./globals.css";
 
 export const metadata = {
-  title: 'Habit Tracker - Lig-4 Style',
-  description: 'Interactive habit tracker with Connect 4 style visualization',
-  manifest: '/manifest.json',
+  title: "Habit Tracker - Lig-4 Style",
+  description: "Interactive habit tracker with Connect 4 style visualization",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'Habit Tracker',
+    statusBarStyle: "default",
+    title: "Habit Tracker",
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
-}
+};
 
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#3b82f6',
-}
+  themeColor: "#3b82f6",
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -64,5 +64,5 @@ export default function RootLayout({ children }) {
       </head>
       <body>{children}</body>
     </html>
-  )
+  );
 }

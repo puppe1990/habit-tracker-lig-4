@@ -41,6 +41,7 @@ You need to create these files in the `/public` directory:
 ## Icon Design
 
 The icons feature:
+
 - Blue background (#3b82f6) representing the app theme
 - Connect 4 style grid pattern
 - Colored dots representing different habit states:
@@ -69,6 +70,7 @@ After adding the icon files:
 ## Cleanup
 
 After generating all required icons, you can delete:
+
 - `generate-icons.html`
 - `create-favicon.html`
 - `ICON_SETUP.md` (this file)

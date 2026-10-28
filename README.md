@@ -1,80 +1,135 @@
-# Habit Tracker - Lig-4 Style
+# Habit Tracker LIG-4
 
-A beautiful, interactive habit tracker built with Next.js and styled with Tailwind CSS, inspired by the Connect 4 game visualization.
+Aplicação de hábitos no estilo Connect 4, com:
 
-<img width="1678" height="920" alt="Screenshot 2025-09-05 at 08 22 34" src="https://github.com/user-attachments/assets/7320a5fb-8241-418d-a04f-8cd5cd99323e" />
+- App web em Next.js 16
+- Autenticação por usuário
+- Persistência em Turso (libSQL)
+- Extensão Chrome conectada ao backend da Netlify
 
-## Features
+## Demo
 
-- 📅 Monthly calendar view with day-by-day tracking
-- 🎯 Visual habit tracking with colored tokens (green = completed, red = missed)
-- ✏️ Inline habit editing and management
-- 📊 Completion statistics and percentages
-- 💾 Local storage persistence
-- 🎨 Beautiful, responsive design
-- ⚡ Smooth animations with Framer Motion
+- Web (produção): [https://habit-tracker-lig-4.netlify.app](https://habit-tracker-lig-4.netlify.app)
 
-## Getting Started
+## Funcionalidades
 
-1. Install dependencies:
-```bash
-npm install
-```
+### Web
 
-2. Configure Turso environment variables:
+- Cadastro, login e logout
+- Estado dos hábitos separado por usuário
+- Marcação por dia (`Feito`, `Falhou`, `Sem marcação`)
+- Navegação por mês
+- Persistência via `/api/state`
+
+### Extensão Chrome (`chrome-extension/`)
+
+- Login e cadastro direto no popup
+- Consome backend web em produção (`https://habit-tracker-lig-4.netlify.app`)
+- Visual LIG-4 com bolinhas coloridas
+- Aba `Hábitos` e aba `Resumo`
+- Setas nas pontas da faixa para navegar nos dias
+- Sessão salva em `chrome.storage.local`
+
+## Stack
+
+- Next.js 16
+- React 19
+- Tailwind CSS
+- Framer Motion
+- Lucide React
+- Turso / `@libsql/client`
+
+## Estrutura
+
+- `app/` páginas e APIs (App Router)
+- `app/api/auth/*` autenticação
+- `app/api/state` estado de hábitos por usuário
+- `lib/auth.js` sessão e hash de senha
+- `lib/turso.js` conexão e schema
+- `lib/cors.js` CORS para web e `chrome-extension://...`
+- `chrome-extension/` popup da extensão
+
+## Pré-requisitos
+
+- Node.js 18+
+- npm
+- Banco Turso criado
+
+## Variáveis de ambiente
+
+Copie e preencha:
+
 ```bash
 cp .env.example .env.local
 ```
 
-3. Run the development server:
+`TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` são obrigatórias para persistência/autenticação.
+
+## Rodando localmente
+
 ```bash
+npm install
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Acesse: [http://localhost:3000](http://localhost:3000)
 
-## Usage
+## Scripts
 
-- **Add habits**: Click "Novo hábito" to add a new habit
-- **Track progress**: Click on circles to mark habits as completed (green) or missed (red)
-- **Clear marks**: Right-click on circles to clear the mark
-- **Edit habits**: Click on habit names to edit them
-- **Navigate months**: Use the arrow buttons to navigate between months
-- **View stats**: See completion rates and statistics for each habit
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run format
+npm run format:check
+npm run test
+npm run test:watch
+npm run verify
+npm run extension:css
+npm run extension:css:watch
+```
 
-## Tech Stack
+## Qualidade
 
-- **Next.js 16** - React framework
-- **React 19** - UI library
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **Lucide React** - Icons
-- **Turso (libSQL)** - Persistent cloud database
+- `npm run verify` roda o gate completo: Prettier + ESLint + Vitest + build.
+- CI (`.github/workflows/ci.yml`) executa o mesmo gate em push na `main` e em pull requests.
+- Pre-commit (husky + lint-staged) formata e linta os arquivos staged e roda a suíte de testes.
 
-## Data Storage
+Observação: se o seu shell exporta `NODE_ENV=production`, instale com `NODE_ENV=development npm install` para que as devDependencies (Vitest, Prettier, husky) sejam instaladas.
 
-Data is persisted in Turso through `/api/state`.  
-If Turso env vars are not configured, the app automatically falls back to localStorage.
+## Extensão Chrome
 
-## Chrome Extension
+1. Abra `chrome://extensions`
+2. Ative `Developer mode`
+3. Clique em `Load unpacked`
+4. Selecione `chrome-extension/`
 
-This repo now includes a Chrome extension popup in `chrome-extension/`.
+Se alterar estilos da extensão:
 
-To load it in Chrome:
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked**
-4. Select `/Users/matheuspuppe/Desktop/Projetos/habit-tracker-lig-4/chrome-extension`
+```bash
+npm run extension:css
+```
 
-The extension popup lets you:
-- Sign up and sign in directly in the popup
-- Use the Netlify backend (`https://habit-tracker-lig-4.netlify.app`) for auth and state
-- Keep habit data separated per authenticated user in Turso
-- Create, edit, and remove habits
-- Navigate months and select day
-- Mark each habit as `Feito`, `Falhou`, or `Sem marcação`
-- Persist session locally with `chrome.storage.local`
+## API (resumo)
 
-## License
+- `POST /api/auth/signup`
+- `POST /api/auth/signin`
+- `POST /api/auth/signout`
+- `GET /api/auth/me`
+- `GET /api/state`
+- `PUT /api/state`
+
+## Deploy (Netlify)
+
+Deploy de produção:
+
+```bash
+netlify deploy --prod --build
+```
+
+Observação: para extensão funcionar, o backend precisa estar deployado com CORS habilitado nas rotas de auth/state.
+
+## Licença
 
 MIT
