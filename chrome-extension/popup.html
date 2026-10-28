@@ -16,6 +16,15 @@
             <p>LIG-4 no popup</p>
           </div>
         </div>
+        <a
+          class="web-link-btn"
+          href="https://habit-tracker-lig-4.netlify.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Abrir app web"
+        >
+          Abrir web
+        </a>
         <button id="logout-btn" class="logout-btn hidden" type="button">Sair</button>
       </header>
 
@@ -27,14 +36,42 @@
 
         <form id="signin-form" class="auth-form">
           <input id="signin-email" type="email" placeholder="Email" required />
-          <input id="signin-password" type="password" placeholder="Senha" required />
+          <div class="password-field">
+            <input id="signin-password" type="password" placeholder="Senha" required />
+            <button
+              class="password-toggle"
+              type="button"
+              data-target="signin-password"
+              data-shown="false"
+              aria-label="Mostrar senha"
+            >
+              👁
+            </button>
+          </div>
           <button type="submit">Entrar</button>
         </form>
 
         <form id="signup-form" class="auth-form hidden">
           <input id="signup-name" type="text" placeholder="Nome" maxlength="60" required />
           <input id="signup-email" type="email" placeholder="Email" required />
-          <input id="signup-password" type="password" placeholder="Senha (mínimo 6)" minlength="6" required />
+          <div class="password-field">
+            <input
+              id="signup-password"
+              type="password"
+              placeholder="Senha (mínimo 6)"
+              minlength="6"
+              required
+            />
+            <button
+              class="password-toggle"
+              type="button"
+              data-target="signup-password"
+              data-shown="false"
+              aria-label="Mostrar senha"
+            >
+              👁
+            </button>
+          </div>
           <button type="submit">Criar conta</button>
         </form>
 
@@ -55,7 +92,13 @@
 
         <section id="tracker-panel">
           <form id="add-habit-form" class="add-form">
-            <input id="new-habit-input" type="text" placeholder="Novo hábito" maxlength="60" required />
+            <input
+              id="new-habit-input"
+              type="text"
+              placeholder="Novo hábito"
+              maxlength="60"
+              required
+            />
             <button type="submit">Adicionar</button>
           </form>
 
@@ -82,8 +125,18 @@
           <button class="state-btn" type="button">Sem marcação</button>
           <small class="state-hint">Clique para alternar</small>
         </div>
-        <div class="connect4-days" aria-label="Dias do resumo Connect 4"></div>
-        <div class="connect4-strip" aria-label="Resumo Connect 4 dos últimos dias"></div>
+        <div class="connect4-nav">
+          <button class="strip-nav-btn prev-strip-day" type="button" aria-label="Voltar dias">
+            ◀
+          </button>
+          <div class="connect4-center">
+            <div class="connect4-days" aria-label="Dias do resumo Connect 4"></div>
+            <div class="connect4-strip" aria-label="Resumo Connect 4 dos últimos dias"></div>
+          </div>
+          <button class="strip-nav-btn next-strip-day" type="button" aria-label="Avançar dias">
+            ▶
+          </button>
+        </div>
       </article>
     </template>
 

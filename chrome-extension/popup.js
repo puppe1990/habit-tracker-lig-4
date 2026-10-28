@@ -16,10 +16,12 @@ const monthNames = [
   "Novembro",
   "Dezembro",
 ];
+const DAY_PAGE_STEP = 7;
 
 const state = {
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
+  dayOffset: 0,
   activeTab: "tracker",
   sessionToken: null,
   user: null,
@@ -63,11 +65,23 @@ function daysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function getAnchorDay() {
+function getBaseAnchorDay() {
   const totalDays = daysInMonth(state.year, state.month);
   const now = new Date();
   const isCurrentMonth = state.year === now.getFullYear() && state.month === now.getMonth();
   return isCurrentMonth ? Math.min(now.getDate(), totalDays) : totalDays;
+}
+
+function getAnchorDay() {
+  const baseAnchor = getBaseAnchorDay();
+  const maxOffset = Math.max(0, baseAnchor - 1);
+  const safeOffset = Math.min(Math.max(0, state.dayOffset), maxOffset);
+
+  if (safeOffset !== state.dayOffset) {
+    state.dayOffset = safeOffset;
+  }
+
+  return baseAnchor - safeOffset;
 }
 
 function getConnect4WindowDays() {
@@ -87,6 +101,10 @@ function getConnect4WindowDays() {
   return windowDays;
 }
 
+function getMaxDayOffset() {
+  return Math.max(0, getBaseAnchorDay() - 1);
+}
+
 function setAuthError(message) {
   if (!message) {
     authError.textContent = "";
@@ -104,6 +122,26 @@ function setAuthMode(mode) {
   signinForm.classList.toggle("hidden", !signinActive);
   signupForm.classList.toggle("hidden", signinActive);
   setAuthError("");
+}
+
+function setupPasswordToggles() {
+  const toggleButtons = document.querySelectorAll(".password-toggle");
+  for (const button of toggleButtons) {
+    button.addEventListener("click", () => {
+      const targetId = button.getAttribute("data-target");
+      if (!targetId) return;
+      const input = document.getElementById(targetId);
+      if (!input) return;
+
+      const currentlyShown = button.getAttribute("data-shown") === "true";
+      const nextShown = !currentlyShown;
+
+      input.type = nextShown ? "text" : "password";
+      button.setAttribute("data-shown", String(nextShown));
+      button.textContent = nextShown ? "🙈" : "👁";
+      button.setAttribute("aria-label", nextShown ? "Ocultar senha" : "Mostrar senha");
+    });
+  }
 }
 
 function setTrackerMode(mode) {
@@ -170,6 +208,10 @@ function clearSessionLocal() {
   persistStorage();
 }
 
+function isUnauthorizedResponse(response, data) {
+  return response.status === 401 || (response.ok && !data?.user && data?.configured !== false);
+}
+
 async function apiRequest(pathname, options = {}) {
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && options.body) {
@@ -208,7 +250,8 @@ async function loadRemoteState() {
 
   state.user = data.user || state.user;
   state.habits = Array.isArray(data?.state?.habits) ? data.state.habits : [];
-  state.records = data?.state?.records && typeof data.state.records === "object" ? data.state.records : {};
+  state.records =
+    data?.state?.records && typeof data.state.records === "object" ? data.state.records : {};
   persistStorage();
   return true;
 }
@@ -247,7 +290,14 @@ function changeMonth(delta) {
   const date = new Date(state.year, state.month + delta, 1);
   state.year = date.getFullYear();
   state.month = date.getMonth();
+  state.dayOffset = 0;
 
+  render();
+}
+
+function shiftDay(delta) {
+  const maxOffset = getMaxDayOffset();
+  state.dayOffset = Math.min(Math.max(0, state.dayOffset + delta), maxOffset);
   render();
 }
 
@@ -270,13 +320,23 @@ function setStateButtonAppearance(button, value) {
   button.textContent = "Sem marcação";
 }
 
-function renderConnect4Strip(daysContainer, tokensContainer, habitId) {
+function renderConnect4Strip(
+  daysContainer,
+  tokensContainer,
+  prevDayButton,
+  nextDayButton,
+  habitId,
+) {
   daysContainer.textContent = "";
   tokensContainer.textContent = "";
   const totalDays = daysInMonth(state.year, state.month);
   const daysWindow = getConnect4WindowDays();
   const mk = getMonthKey(state.year, state.month);
   const habitRecords = state.records?.[mk]?.[habitId] || {};
+  const maxOffset = getMaxDayOffset();
+
+  if (prevDayButton) prevDayButton.disabled = state.dayOffset >= maxOffset;
+  if (nextDayButton) nextDayButton.disabled = state.dayOffset <= 0;
 
   for (let index = 0; index < daysWindow.length; index += 1) {
     const day = daysWindow[index];
@@ -475,6 +535,8 @@ function renderHabits() {
     const editButton = node.querySelector(".edit-btn");
     const deleteButton = node.querySelector(".delete-btn");
     const stateButton = node.querySelector(".state-btn");
+    const prevStripDayBtn = node.querySelector(".prev-strip-day");
+    const nextStripDayBtn = node.querySelector(".next-strip-day");
     const connect4Days = node.querySelector(".connect4-days");
     const connect4Strip = node.querySelector(".connect4-strip");
 
@@ -523,7 +585,13 @@ function renderHabits() {
     });
 
     updateStateButton();
-    renderConnect4Strip(connect4Days, connect4Strip, habit.id);
+    if (prevStripDayBtn) {
+      prevStripDayBtn.addEventListener("click", () => shiftDay(DAY_PAGE_STEP));
+    }
+    if (nextStripDayBtn) {
+      nextStripDayBtn.addEventListener("click", () => shiftDay(-DAY_PAGE_STEP));
+    }
+    renderConnect4Strip(connect4Days, connect4Strip, prevStripDayBtn, nextStripDayBtn, habit.id);
     habitsList.appendChild(node);
   }
 }
@@ -664,20 +732,25 @@ async function bootstrapSession() {
 
   try {
     const { response, data } = await apiRequest("/api/auth/me", { method: "GET" });
-    if (!response.ok || !data?.user) {
+    if (isUnauthorizedResponse(response, data)) {
       clearSessionLocal();
       return;
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Falha ao validar sessão");
     }
 
     state.user = data.user;
     await loadRemoteState();
   } catch (error) {
     console.error("Session bootstrap failed:", error);
-    clearSessionLocal();
+    setAuthError("Não foi possível validar a sessão agora. Tente novamente em instantes.");
   }
 }
 
 async function bootstrap() {
+  setupPasswordToggles();
   setupAuthEvents();
   setupTrackerEvents();
   setAuthMode("signin");

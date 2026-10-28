@@ -1,9 +1,24 @@
-'use client'
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw, Flame, LogOut } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  CheckCircle2,
+  XCircle,
+  Calendar as CalendarIcon,
+  Sun,
+  Moon,
+  Download,
+  Upload,
+  RotateCcw,
+  RotateCw,
+  Flame,
+  LogOut,
+} from "lucide-react";
 
 // === Helpers ===
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
@@ -54,111 +69,137 @@ const loadLocalState = () => {
 // === CSV Functions ===
 const exportToCSV = (habits, records) => {
   const csvData = [];
-  
+
   // Add header row
-  const header = ['Habit ID', 'Habit Name', 'Month', 'Day', 'Status'];
-  csvData.push(header.join(','));
-  
+  const header = ["Habit ID", "Habit Name", "Month", "Day", "Status"];
+  csvData.push(header.join(","));
+
   // Add data rows
-  habits.forEach(habit => {
-    Object.keys(records).forEach(monthKey => {
+  habits.forEach((habit) => {
+    Object.keys(records).forEach((monthKey) => {
       const monthData = records[monthKey];
       if (monthData[habit.id]) {
-        Object.keys(monthData[habit.id]).forEach(day => {
+        Object.keys(monthData[habit.id]).forEach((day) => {
           const status = monthData[habit.id][day];
-          const [year, month] = monthKey.split('-');
+          const [year, month] = monthKey.split("-");
           const row = [
             habit.id,
             `"${habit.name.replace(/"/g, '""')}"`, // Escape quotes in habit names
             monthKey,
             day,
-            status
+            status,
           ];
-          csvData.push(row.join(','));
+          csvData.push(row.join(","));
         });
       }
     });
   });
-  
-  return csvData.join('\n');
+
+  return csvData.join("\n");
+};
+
+const parseCSVRows = (csvText) => {
+  const rows = [];
+  let row = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < csvText.length; i += 1) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      row.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") {
+        i += 1;
+      }
+      row.push(current.trim());
+      if (row.some((field) => field !== "")) {
+        rows.push(row);
+      }
+      row = [];
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  row.push(current.trim());
+  if (row.some((field) => field !== "")) {
+    rows.push(row);
+  }
+
+  return rows;
 };
 
 const importFromCSV = (csvText) => {
-  const lines = csvText.trim().split('\n');
-  if (lines.length < 2) {
-    throw new Error('Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados');
+  const rows = parseCSVRows(csvText.trim());
+  if (rows.length < 2) {
+    throw new Error("Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados");
   }
-  
-  const header = lines[0].split(',');
-  const expectedHeaders = ['Habit ID', 'Habit Name', 'Month', 'Day', 'Status'];
-  
-  // Validate header
+
+  const header = rows[0];
+
   if (header.length < 5) {
-    throw new Error('Cabeçalho CSV inválido. Esperado: Habit ID, Habit Name, Month, Day, Status');
+    throw new Error("Cabeçalho CSV inválido. Esperado: Habit ID, Habit Name, Month, Day, Status");
   }
-  
-  const data = lines.slice(1);
+
+  const data = rows.slice(1);
   const habitsMap = new Map();
   const recordsMap = {};
   let validRows = 0;
   let invalidRows = 0;
-  
-  data.forEach((line, index) => {
-    if (!line.trim()) return; // Skip empty lines
-    
-    // Simple CSV parsing - handles quoted fields
-    const fields = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        fields.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    fields.push(current.trim());
-    
+
+  data.forEach((fields) => {
     if (fields.length >= 5) {
       const [habitId, habitName, monthKey, day, status] = fields;
-      
+
       // Validate data
       if (!habitId || !habitName || !monthKey || !day || !status) {
         invalidRows++;
         return;
       }
-      
+
       // Validate status
-      if (!['done', 'missed'].includes(status)) {
+      if (!["done", "missed"].includes(status)) {
         invalidRows++;
         return;
       }
-      
+
       // Validate month format (YYYY-MM)
       if (!/^\d{4}-\d{2}$/.test(monthKey)) {
         invalidRows++;
         return;
       }
-      
+
       // Validate day (1-31)
       const dayNum = parseInt(day);
       if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
         invalidRows++;
         return;
       }
-      
-      const cleanHabitName = habitName.replace(/^"|"$/g, '').replace(/""/g, '"');
-      
+
       // Add habit to map
       if (!habitsMap.has(habitId)) {
-        habitsMap.set(habitId, { id: habitId, name: cleanHabitName });
+        habitsMap.set(habitId, { id: habitId, name: habitName });
       }
-      
+
       // Add record
       if (!recordsMap[monthKey]) {
         recordsMap[monthKey] = {};
@@ -172,19 +213,19 @@ const importFromCSV = (csvText) => {
       invalidRows++;
     }
   });
-  
+
   if (validRows === 0) {
-    throw new Error('Nenhuma linha válida encontrada no arquivo CSV');
+    throw new Error("Nenhuma linha válida encontrada no arquivo CSV");
   }
-  
+
   if (invalidRows > 0) {
     console.warn(`${invalidRows} linhas inválidas foram ignoradas durante a importação`);
   }
-  
+
   return {
     habits: Array.from(habitsMap.values()),
     records: recordsMap,
-    stats: { validRows, invalidRows }
+    stats: { validRows, invalidRows },
   };
 };
 
@@ -199,10 +240,11 @@ export default function ConnectFourHabitTracker() {
   const [records, setRecords] = useState({});
   const [darkMode, setDarkMode] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
+  const [activeTab, setActiveTab] = useState("calendar"); // 'calendar' or 'summary'
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const remoteSyncEnabledRef = useRef(true);
+  const skipNextRemoteSaveRef = useRef(false);
 
   // Load state from Turso and require authentication when configured
   useEffect(() => {
@@ -232,6 +274,7 @@ export default function ConnectFourHabitTracker() {
 
         if (data?.configured && data.state) {
           remoteSyncEnabledRef.current = true;
+          skipNextRemoteSaveRef.current = true;
           setCurrentUser(data.user || null);
           const state = normalizeAppState(data.state);
           localStorage.setItem(storageKey, JSON.stringify(state));
@@ -266,6 +309,10 @@ export default function ConnectFourHabitTracker() {
     localStorage.setItem(storageKey, JSON.stringify(payload));
 
     if (!remoteSyncEnabledRef.current) return;
+    if (skipNextRemoteSaveRef.current) {
+      skipNextRemoteSaveRef.current = false;
+      return;
+    }
 
     const timeout = setTimeout(async () => {
       try {
@@ -288,21 +335,18 @@ export default function ConnectFourHabitTracker() {
 
   // Apply dark mode to document
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       if (darkMode) {
-        document.documentElement.classList.add('dark');
+        document.documentElement.classList.add("dark");
       } else {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.remove("dark");
       }
     }
   }, [darkMode]);
 
   const monthKey = useMemo(() => getMonthKey(year, month), [year, month]);
   const totalDays = useMemo(() => daysInMonth(year, month), [year, month]);
-  const daysArray = useMemo(
-    () => Array.from({ length: totalDays }, (_, i) => i + 1),
-    [totalDays]
-  );
+  const daysArray = useMemo(() => Array.from({ length: totalDays }, (_, i) => i + 1), [totalDays]);
 
   const monthRecords = records[monthKey] || {};
 
@@ -380,12 +424,15 @@ export default function ConnectFourHabitTracker() {
   // CSV Export/Import functions
   const handleExportCSV = () => {
     const csvContent = exportToCSV(habits, records);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `habit-tracker-export-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `habit-tracker-export-${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -400,36 +447,36 @@ export default function ConnectFourHabitTracker() {
       try {
         const csvText = e.target.result;
         const { habits: importedHabits, records: importedRecords, stats } = importFromCSV(csvText);
-        
+
         let confirmMessage = `Importar ${importedHabits.length} hábitos e seus registros?\n\n`;
         confirmMessage += `• ${stats.validRows} linhas válidas processadas\n`;
         if (stats.invalidRows > 0) {
           confirmMessage += `• ${stats.invalidRows} linhas inválidas ignoradas\n`;
         }
         confirmMessage += `\nIsso substituirá todos os dados atuais.`;
-        
+
         if (confirm(confirmMessage)) {
           setHabits(importedHabits);
           setRecords(importedRecords);
-          
+
           let successMessage = `Dados importados com sucesso!\n\n`;
           successMessage += `• ${importedHabits.length} hábitos importados\n`;
           successMessage += `• ${stats.validRows} registros processados\n`;
           if (stats.invalidRows > 0) {
             successMessage += `• ${stats.invalidRows} linhas inválidas ignoradas`;
           }
-          
+
           alert(successMessage);
         }
       } catch (error) {
         alert(`Erro ao importar arquivo CSV:\n\n${error.message}`);
-        console.error('CSV Import Error:', error);
+        console.error("CSV Import Error:", error);
       }
     };
     reader.readAsText(file);
-    
+
     // Reset file input
-    event.target.value = '';
+    event.target.value = "";
   };
 
   // === UI Helpers ===
@@ -450,29 +497,29 @@ export default function ConnectFourHabitTracker() {
   const getHabitSummary = (habitId) => {
     // Collect all records in chronological order
     const allRecords = [];
-    
+
     Object.entries(records).forEach(([monthKey, monthData]) => {
       const habitData = monthData[habitId];
       if (habitData) {
         Object.entries(habitData).forEach(([day, status]) => {
-          const [year, month] = monthKey.split('-');
+          const [year, month] = monthKey.split("-");
           allRecords.push({
             date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day)),
             status,
             monthKey,
-            day: parseInt(day)
+            day: parseInt(day),
           });
         });
       }
     });
-    
+
     // Sort by date
     allRecords.sort((a, b) => a.date - b.date);
-    
+
     if (allRecords.length === 0) {
       return { totalCumprido: 0, isBroken: false, maxStreak: 0 };
     }
-    
+
     // Find the last "missed" record
     let lastMissedIndex = -1;
     for (let i = allRecords.length - 1; i >= 0; i--) {
@@ -481,11 +528,11 @@ export default function ConnectFourHabitTracker() {
         break;
       }
     }
-    
+
     // Count "done" records after the last "missed" (or from beginning if never missed)
     const startIndex = lastMissedIndex + 1;
     let totalCumprido = 0;
-    
+
     for (let i = startIndex; i < allRecords.length; i++) {
       if (allRecords[i].status === "done") {
         totalCumprido++;
@@ -523,20 +570,20 @@ export default function ConnectFourHabitTracker() {
       lastStatus = status;
       if (currentStreak > maxStreak) maxStreak = currentStreak;
     }
-    
+
     // A habit is considered "broken" only if it has recent "missed" records
     // and no recent "done" records (indicating it was abandoned)
     const recentRecords = allRecords.slice(-7); // Last 7 records
-    const hasRecentMissed = recentRecords.some(r => r.status === "missed");
-    const hasRecentDone = recentRecords.some(r => r.status === "done");
-    
+    const hasRecentMissed = recentRecords.some((r) => r.status === "missed");
+    const hasRecentDone = recentRecords.some((r) => r.status === "done");
+
     // If there are recent missed records but no recent done records, consider broken
     const isBroken = hasRecentMissed && !hasRecentDone;
-    
+
     return {
       totalCumprido: isBroken ? 0 : totalCumprido,
       isBroken,
-      maxStreak
+      maxStreak,
     };
   };
 
@@ -623,28 +670,29 @@ export default function ConnectFourHabitTracker() {
             bg: "bg-gradient-to-br from-emerald-400 to-emerald-600",
             shadow: "shadow-emerald-200/50",
             ring: "ring-emerald-300/50",
-            icon: <CheckCircle2 className="h-3 w-3 text-white" />
+            icon: <CheckCircle2 className="h-3 w-3 text-white" />,
           };
         case "missed":
           return {
             bg: "bg-gradient-to-br from-red-400 to-red-600",
             shadow: "shadow-red-200/50",
             ring: "ring-red-300/50",
-            icon: <XCircle className="h-3 w-3 text-white" />
+            icon: <XCircle className="h-3 w-3 text-white" />,
           };
         default:
           return {
             bg: "bg-gradient-to-br from-slate-200 to-slate-300",
             shadow: "shadow-slate-200/50",
             ring: "ring-slate-300/50",
-            icon: null
+            icon: null,
           };
       }
     };
 
     const styles = getTokenStyles();
-    const title = state === "done" ? "Cumprido" : state === "missed" ? "Não cumprido" : "Sem marcação";
-    
+    const title =
+      state === "done" ? "Cumprido" : state === "missed" ? "Não cumprido" : "Sem marcação";
+
     return (
       <AnimatePresence mode="popLayout">
         <motion.div
@@ -654,11 +702,11 @@ export default function ConnectFourHabitTracker() {
           exit={{ y: 24, opacity: 0, scale: 0.8 }}
           whileHover={{ scale: 1.1, y: -2 }}
           whileTap={{ scale: 0.95 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 400, 
+          transition={{
+            type: "spring",
+            stiffness: 400,
             damping: 25,
-            hover: { duration: 0.2 }
+            hover: { duration: 0.2 },
           }}
           className={`
             group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full 
@@ -677,7 +725,9 @@ export default function ConnectFourHabitTracker() {
             </motion.div>
           )}
           {/* Subtle glow effect */}
-          <div className={`absolute inset-0 rounded-full ${styles.bg} opacity-0 blur-sm transition-opacity group-hover:opacity-30`} />
+          <div
+            className={`absolute inset-0 rounded-full ${styles.bg} opacity-0 blur-sm transition-opacity group-hover:opacity-30`}
+          />
         </motion.div>
       </AnimatePresence>
     );
@@ -714,14 +764,14 @@ export default function ConnectFourHabitTracker() {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState("");
     return (
-      <motion.div 
+      <motion.div
         className="relative"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         {open ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -765,7 +815,7 @@ export default function ConnectFourHabitTracker() {
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Plus className="h-4 w-4" /> 
+            <Plus className="h-4 w-4" />
             <span>Novo hábito</span>
           </motion.button>
         )}
@@ -775,7 +825,7 @@ export default function ConnectFourHabitTracker() {
 
   // Summary tab component
   function SummaryTab() {
-    const summaries = habits.map(habit => ({ habit, summary: getHabitSummary(habit.id) }));
+    const summaries = habits.map((habit) => ({ habit, summary: getHabitSummary(habit.id) }));
     const totalCumprido = summaries.reduce((sum, item) => sum + item.summary.totalCumprido, 0);
 
     if (habits.length === 0) {
@@ -783,7 +833,7 @@ export default function ConnectFourHabitTracker() {
     }
 
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
@@ -807,67 +857,67 @@ export default function ConnectFourHabitTracker() {
         {/* Habit Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {summaries.map(({ habit, summary }, index) => (
-                <motion.div
-                  key={habit.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 * index }}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/90 to-slate-50/90 p-6 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm transition-all hover:shadow-xl hover:ring-indigo-300/50"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="mb-2 text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
-                        {habit.name}
-                      </h3>
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 ring-1 ring-emerald-200/50">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-sm font-semibold">{summary.totalCumprido}</span>
-                          </div>
-                          <span className="text-xs text-slate-500">dias cumpridos</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-orange-700 ring-1 ring-orange-200/50">
-                            <Flame className="h-4 w-4" />
-                            <span className="text-sm font-semibold">{summary.maxStreak}</span>
-                          </div>
-                          <span className="text-xs text-slate-500">maior sequência</span>
-                        </div>
-                        {summary.isBroken && (
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1.5 text-rose-700 ring-1 ring-rose-200/50">
-                              <XCircle className="h-4 w-4" />
-                              <span className="text-sm font-semibold">quebrado</span>
-                            </div>
-                          </div>
-                        )}
+            <motion.div
+              key={habit.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 * index }}
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/90 to-slate-50/90 p-6 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm transition-all hover:shadow-xl hover:ring-indigo-300/50"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="mb-2 text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                    {habit.name}
+                  </h3>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 ring-1 ring-emerald-200/50">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span className="text-sm font-semibold">{summary.totalCumprido}</span>
                       </div>
+                      <span className="text-xs text-slate-500">dias cumpridos</span>
                     </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 shadow-sm ring-1 ring-emerald-200/50">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-orange-700 ring-1 ring-orange-200/50">
+                        <Flame className="h-4 w-4" />
+                        <span className="text-sm font-semibold">{summary.maxStreak}</span>
+                      </div>
+                      <span className="text-xs text-slate-500">maior sequência</span>
                     </div>
+                    {summary.isBroken && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1.5 text-rose-700 ring-1 ring-rose-200/50">
+                          <XCircle className="h-4 w-4" />
+                          <span className="text-sm font-semibold">quebrado</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Progress bar */}
-                  <div className="mt-4">
-                    <div className="mb-1 flex justify-between text-xs text-slate-500">
-                      <span>Progresso</span>
-                      <span>{summary.totalCumprido} dias</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-200">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((summary.totalCumprido / 30) * 100, 100)}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + index * 0.1 }}
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
-                      />
-                    </div>
-                  </div>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 shadow-sm ring-1 ring-emerald-200/50">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                </div>
+              </div>
 
-                  {/* Subtle glow effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-teal-500/0 opacity-0 blur-sm transition-opacity group-hover:opacity-10" />
-                </motion.div>
+              {/* Progress bar */}
+              <div className="mt-4">
+                <div className="mb-1 flex justify-between text-xs text-slate-500">
+                  <span>Progresso</span>
+                  <span>{summary.totalCumprido} dias</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-200">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((summary.totalCumprido / 30) * 100, 100)}%` }}
+                    transition={{ duration: 0.8, delay: 0.2 + index * 0.1 }}
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-teal-500/0 opacity-0 blur-sm transition-opacity group-hover:opacity-10" />
+            </motion.div>
           ))}
         </div>
       </motion.div>
@@ -877,14 +927,14 @@ export default function ConnectFourHabitTracker() {
   // Empty state component
   function EmptyState() {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 p-16 shadow-inner ring-1 ring-slate-200/50"
       >
         <div className="text-center">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
@@ -892,7 +942,7 @@ export default function ConnectFourHabitTracker() {
           >
             <Plus className="h-10 w-10 text-indigo-500" />
           </motion.div>
-          <motion.h3 
+          <motion.h3
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
@@ -900,7 +950,7 @@ export default function ConnectFourHabitTracker() {
           >
             Nenhum hábito cadastrado
           </motion.h3>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.5 }}
@@ -936,7 +986,7 @@ export default function ConnectFourHabitTracker() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
       <div className="mx-auto max-w-[1200px] p-6">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -952,7 +1002,9 @@ export default function ConnectFourHabitTracker() {
                   <h1 className="text-3xl font-bold tracking-tight text-slate-800">
                     Habit Tracker
                   </h1>
-                  <p className="text-sm text-slate-600">Estilo Connect 4 • Acompanhe seus hábitos diários</p>
+                  <p className="text-sm text-slate-600">
+                    Estilo Connect 4 • Acompanhe seus hábitos diários
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -993,7 +1045,7 @@ export default function ConnectFourHabitTracker() {
                   <Download className="h-4 w-4" />
                   <span className="text-sm font-medium">Exportar</span>
                 </motion.button>
-                
+
                 <label className="group flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700">
                   <Upload className="h-4 w-4" />
                   <span className="text-sm font-medium">Importar</span>
@@ -1006,7 +1058,7 @@ export default function ConnectFourHabitTracker() {
                   />
                 </label>
               </div>
-              
+
               <motion.button
                 onClick={() => setIsHorizontalLayout(!isHorizontalLayout)}
                 className="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -1019,7 +1071,11 @@ export default function ConnectFourHabitTracker() {
                   animate={{ rotate: isHorizontalLayout ? 90 : 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {isHorizontalLayout ? <RotateCcw className="h-5 w-5" /> : <RotateCw className="h-5 w-5" />}
+                  {isHorizontalLayout ? (
+                    <RotateCcw className="h-5 w-5" />
+                  ) : (
+                    <RotateCw className="h-5 w-5" />
+                  )}
                 </motion.div>
               </motion.button>
               <motion.button
@@ -1052,7 +1108,9 @@ export default function ConnectFourHabitTracker() {
               </button>
               <div className="flex items-center gap-3 rounded-2xl bg-white/90 px-6 py-3 text-sm font-semibold shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm dark:bg-slate-800/90 dark:ring-slate-600/50">
                 <CalendarIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-slate-800 dark:text-slate-200">{monthNames[month]} {year}</span>
+                <span className="text-slate-800 dark:text-slate-200">
+                  {monthNames[month]} {year}
+                </span>
               </div>
               <button
                 onClick={() => changeMonth(1)}
@@ -1072,7 +1130,7 @@ export default function ConnectFourHabitTracker() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -1080,11 +1138,11 @@ export default function ConnectFourHabitTracker() {
         >
           <div className="flex gap-2 rounded-2xl bg-white/60 p-2 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm">
             <motion.button
-              onClick={() => setActiveTab('calendar')}
+              onClick={() => setActiveTab("calendar")}
               className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                activeTab === 'calendar'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-slate-600 hover:bg-slate-100'
+                activeTab === "calendar"
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -1092,11 +1150,11 @@ export default function ConnectFourHabitTracker() {
               📅 Calendário
             </motion.button>
             <motion.button
-              onClick={() => setActiveTab('summary')}
+              onClick={() => setActiveTab("summary")}
               className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                activeTab === 'summary'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-slate-600 hover:bg-slate-100'
+                activeTab === "summary"
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -1107,10 +1165,10 @@ export default function ConnectFourHabitTracker() {
         </motion.div>
 
         {/* Main Content */}
-        {activeTab === 'calendar' ? (
+        {activeTab === "calendar" ? (
           <>
             {/* Legend */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -1145,7 +1203,7 @@ export default function ConnectFourHabitTracker() {
             {habits.length === 0 ? (
               <EmptyState />
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
@@ -1154,15 +1212,25 @@ export default function ConnectFourHabitTracker() {
                 {isHorizontalLayout ? (
                   // Horizontal Layout: Habits as rows, Days as columns
                   <div className="min-w-[800px]">
-                    <div className="grid gap-1" style={{ gridTemplateRows: `60px repeat(${habits.length}, minmax(80px, 1fr))` }}>
+                    <div
+                      className="grid gap-1"
+                      style={{
+                        gridTemplateRows: `60px repeat(${habits.length}, minmax(80px, 1fr))`,
+                      }}
+                    >
                       {/* Day headers row */}
                       <div className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-2 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50">
-                        <div className="grid gap-1" style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}>
+                        <div
+                          className="grid gap-1"
+                          style={{
+                            gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))`,
+                          }}
+                        >
                           <div className="flex items-center justify-center text-sm font-semibold text-slate-600">
                             Hábitos
                           </div>
                           {daysArray.map((day, dayIndex) => (
-                            <motion.div 
+                            <motion.div
                               key={day}
                               initial={{ opacity: 0, y: -20 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -1170,23 +1238,29 @@ export default function ConnectFourHabitTracker() {
                               className="flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 px-2 py-2 text-xs font-semibold shadow-sm ring-1 ring-indigo-200/50"
                             >
                               <span className="text-slate-800">{pad(day)}</span>
-                              <span className="text-slate-500">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                              <span className="text-slate-500">
+                                {new Date(year, month, day).toLocaleDateString("pt-BR", {
+                                  weekday: "short",
+                                })}
+                              </span>
                             </motion.div>
                           ))}
                         </div>
                       </div>
                       {/* Habit rows */}
                       {habits.map((habit, habitIndex) => (
-                        <motion.div 
+                        <motion.div
                           key={habit.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.4, delay: 0.1 * habitIndex }}
-                          className="grid gap-1" 
-                          style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}
+                          className="grid gap-1"
+                          style={{
+                            gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))`,
+                          }}
                         >
                           {/* Habit header */}
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.3, delay: 0.05 * habitIndex }}
@@ -1196,8 +1270,8 @@ export default function ConnectFourHabitTracker() {
                           </motion.div>
                           {/* Day cells */}
                           {daysArray.map((day, dayIndex) => (
-                            <motion.div 
-                              key={habit.id + "-" + day} 
+                            <motion.div
+                              key={habit.id + "-" + day}
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.3, delay: 0.05 * (habitIndex + dayIndex) }}
@@ -1213,13 +1287,18 @@ export default function ConnectFourHabitTracker() {
                 ) : (
                   // Vertical Layout: Days as rows, Habits as columns (original)
                   <div className="min-w-[800px]">
-                    <div className="grid gap-1" style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}>
+                    <div
+                      className="grid gap-1"
+                      style={{
+                        gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))`,
+                      }}
+                    >
                       {/* Corner empty */}
                       <div />
                       {/* Habit headers */}
                       {habits.map((habit, index) => (
-                        <motion.div 
-                          key={habit.id} 
+                        <motion.div
+                          key={habit.id}
                           initial={{ opacity: 0, y: -20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.4, delay: 0.1 * index }}
@@ -1232,19 +1311,25 @@ export default function ConnectFourHabitTracker() {
                       {daysArray.map((day, dayIndex) => (
                         <React.Fragment key={day}>
                           {/* Day label */}
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
                             className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
                           >
-                            <span className="text-slate-800">{pad(day)}/{pad(month + 1)}</span>
-                            <span className="text-slate-500 text-xs">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                            <span className="text-slate-800">
+                              {pad(day)}/{pad(month + 1)}
+                            </span>
+                            <span className="text-slate-500 text-xs">
+                              {new Date(year, month, day).toLocaleDateString("pt-BR", {
+                                weekday: "short",
+                              })}
+                            </span>
                           </motion.div>
                           {/* Cells */}
                           {habits.map((habit, habitIndex) => (
-                            <motion.div 
-                              key={habit.id + "-" + day} 
+                            <motion.div
+                              key={habit.id + "-" + day}
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
@@ -1263,7 +1348,7 @@ export default function ConnectFourHabitTracker() {
 
             {/* Footer actions - only show when there are habits */}
             {habits.length > 0 && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
@@ -1271,7 +1356,10 @@ export default function ConnectFourHabitTracker() {
               >
                 <div className="max-w-prose">
                   <p className="text-sm text-slate-600">
-                    💡 <span className="font-semibold">Dica:</span> Clique em um círculo para alternar entre <span className="font-bold text-emerald-600">cumprido</span> (verde) e <span className="font-bold text-red-600">não cumprido</span> (vermelho). Clique com o botão direito para limpar.
+                    💡 <span className="font-semibold">Dica:</span> Clique em um círculo para
+                    alternar entre <span className="font-bold text-emerald-600">cumprido</span>{" "}
+                    (verde) e <span className="font-bold text-red-600">não cumprido</span>{" "}
+                    (vermelho). Clique com o botão direito para limpar.
                   </p>
                 </div>
                 <motion.button
@@ -1298,7 +1386,7 @@ export default function ConnectFourHabitTracker() {
         )}
 
         {/* Subtext */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}

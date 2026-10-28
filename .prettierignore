@@ -1,0 +1,15 @@
+node_modules
+.next
+.netlify
+out
+build
+coverage
+package-lock.json
+deno.lock
+
+# gerado pelo tailwind (npm run extension:css)
+chrome-extension/popup.css
+
+# binários
+public/*.png
+public/*.ico

@@ -1,5 +1,10 @@
 import crypto from "node:crypto";
-import { clearSessionCookie, createSession, hashPassword, setSessionCookie } from "../../../../lib/auth";
+import {
+  clearSessionCookie,
+  createSession,
+  hashPassword,
+  setSessionCookie,
+} from "../../../../lib/auth";
 import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
 import { corsJson, corsPreflight } from "../../../../lib/cors";
 
@@ -17,7 +22,9 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const name = String(body?.name || "").trim();
-    const email = String(body?.email || "").trim().toLowerCase();
+    const email = String(body?.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(body?.password || "");
 
     if (!name || !email || !password) {
@@ -46,7 +53,12 @@ export async function POST(request) {
       args: [email],
     });
     if (existing.rows.length) {
-      return corsJson(request, { error: "Este email já está cadastrado" }, { status: 409 }, CORS_METHODS);
+      return corsJson(
+        request,
+        { error: "Este email já está cadastrado" },
+        { status: 409 },
+        CORS_METHODS,
+      );
     }
 
     const userId = crypto.randomUUID();
@@ -56,11 +68,16 @@ export async function POST(request) {
     });
 
     const session = await createSession(db, userId);
-    const response = corsJson(request, {
-      ok: true,
-      sessionToken: session.token,
-      user: { id: userId, name, email },
-    }, undefined, CORS_METHODS);
+    const response = corsJson(
+      request,
+      {
+        ok: true,
+        sessionToken: session.token,
+        user: { id: userId, name, email },
+      },
+      undefined,
+      CORS_METHODS,
+    );
     clearSessionCookie(response);
     setSessionCookie(response, session.token, session.expiresAt);
     return response;
