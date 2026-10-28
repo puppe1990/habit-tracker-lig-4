@@ -13,9 +13,10 @@ const METHODS = "GET, PUT, OPTIONS";
 
 describe("corsPreflight", () => {
   it.each([
-    ["produção", "https://habit-tracker-lig-4.netlify.app"],
+    ["produção", "https://habit-tracker-lig-4.apps.gestaobem.com"],
     ["localhost", "http://localhost:3000"],
     ["loopback", "http://127.0.0.1:3000"],
+    ["dev alternativo", "http://localhost:8791"],
     ["extensão chrome", "chrome-extension://abcdefghijklmnop"],
   ])("libera origem permitida (%s)", (_label, origin) => {
     const response = corsPreflight(buildRequest(origin), METHODS);

@@ -1,11 +1,7 @@
 import crypto from "node:crypto";
-import {
-  clearSessionCookie,
-  createSession,
-  hashPassword,
-  setSessionCookie,
-} from "../../../../lib/auth";
-import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { createSession, hashPassword, setSessionCookie } from "../../../../lib/auth";
+import { getDatabase } from "../../../../lib/db";
+import { findUserByEmail, insertUser } from "../../../../lib/users";
 import { corsJson, corsPreflight } from "../../../../lib/cors";
 
 const CORS_METHODS = "POST, OPTIONS";
@@ -15,10 +11,6 @@ export function OPTIONS(request) {
 }
 
 export async function POST(request) {
-  if (!isTursoConfigured()) {
-    return corsJson(request, { error: "Turso is not configured" }, { status: 503 }, CORS_METHODS);
-  }
-
   try {
     const body = await request.json();
     const name = String(body?.name || "").trim();
@@ -45,14 +37,8 @@ export async function POST(request) {
       );
     }
 
-    await ensureSchema();
-    const db = getTursoClient();
-
-    const existing = await db.execute({
-      sql: "SELECT id FROM users WHERE email = ? LIMIT 1",
-      args: [email],
-    });
-    if (existing.rows.length) {
+    const db = getDatabase();
+    if (findUserByEmail(db, email)) {
       return corsJson(
         request,
         { error: "Este email já está cadastrado" },
@@ -62,23 +48,15 @@ export async function POST(request) {
     }
 
     const userId = crypto.randomUUID();
-    await db.execute({
-      sql: "INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)",
-      args: [userId, name, email, hashPassword(password)],
-    });
+    insertUser(db, { id: userId, name, email, passwordHash: hashPassword(password) });
 
-    const session = await createSession(db, userId);
+    const session = createSession(db, userId);
     const response = corsJson(
       request,
-      {
-        ok: true,
-        sessionToken: session.token,
-        user: { id: userId, name, email },
-      },
+      { ok: true, sessionToken: session.token, user: { id: userId, name, email } },
       undefined,
       CORS_METHODS,
     );
-    clearSessionCookie(response);
     setSessionCookie(response, session.token, session.expiresAt);
     return response;
   } catch (error) {

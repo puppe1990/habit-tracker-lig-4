@@ -60,7 +60,6 @@ export default function ConnectFourHabitTracker() {
   const [activeTab, setActiveTab] = useState("calendar");
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const remoteSyncEnabledRef = useRef(true);
   const skipNextRemoteSaveRef = useRef(false);
 
   useEffect(() => {
@@ -88,18 +87,13 @@ export default function ConnectFourHabitTracker() {
         const data = await response.json();
         if (cancelled) return;
 
-        if (data?.configured && data.state) {
-          remoteSyncEnabledRef.current = true;
+        if (data?.state) {
           skipNextRemoteSaveRef.current = true;
           setCurrentUser(data.user || null);
           const state = normalizeAppState(data.state);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           applyState(state);
           return;
-        }
-
-        if (data?.configured === false) {
-          remoteSyncEnabledRef.current = false;
         }
       } catch (error) {
         // Keep remote sync enabled for transient failures (5xx/network).
@@ -121,7 +115,6 @@ export default function ConnectFourHabitTracker() {
     const payload = normalizeAppState({ habits, records, darkMode, isHorizontalLayout });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
-    if (!remoteSyncEnabledRef.current) return;
     if (skipNextRemoteSaveRef.current) {
       skipNextRemoteSaveRef.current = false;
       return;
@@ -327,7 +320,7 @@ export default function ConnectFourHabitTracker() {
           className="mt-6 text-center"
         >
           <p className="text-xs text-slate-500">
-            💾 Os dados são salvos no Turso (com fallback local no navegador)
+            💾 Os dados são salvos no servidor (SQLite) com fallback local no navegador
           </p>
         </motion.div>
       </div>

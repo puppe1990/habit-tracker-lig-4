@@ -8,7 +8,7 @@ import { renderHabitsList } from "./ui/habitsView.js";
 import { renderSummary } from "./ui/summaryView.js";
 
 const STORAGE_KEY = "habit_tracker_extension_netlify_v1";
-const API_BASE = "https://habit-tracker-lig-4.netlify.app";
+const API_BASE = "https://habit-tracker-lig-4.apps.gestaobem.com";
 
 const state = {
   year: new Date().getFullYear(),

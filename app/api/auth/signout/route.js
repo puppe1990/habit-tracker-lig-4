@@ -1,5 +1,5 @@
 import { clearSessionCookie, deleteSessionFromRequest } from "../../../../lib/auth";
-import { ensureSchema, getTursoClient, isTursoConfigured } from "../../../../lib/turso";
+import { getDatabase } from "../../../../lib/db";
 import { corsJson, corsPreflight } from "../../../../lib/cors";
 
 const CORS_METHODS = "POST, OPTIONS";
@@ -9,16 +9,8 @@ export function OPTIONS(request) {
 }
 
 export async function POST(request) {
-  if (!isTursoConfigured()) {
-    const response = corsJson(request, { ok: true }, undefined, CORS_METHODS);
-    clearSessionCookie(response);
-    return response;
-  }
-
   try {
-    await ensureSchema();
-    const db = getTursoClient();
-    await deleteSessionFromRequest(db, request);
+    deleteSessionFromRequest(getDatabase(), request);
   } catch (error) {
     console.error("Signout cleanup failed:", error);
   }

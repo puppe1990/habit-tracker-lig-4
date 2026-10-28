@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { faker } from "@faker-js/faker";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   SESSION_COOKIE_NAME,
   clearSessionCookie,
@@ -11,6 +11,9 @@ import {
   setSessionCookie,
   verifyPassword,
 } from "../lib/auth.js";
+import { insertSession } from "../lib/sessions.js";
+import { insertUser } from "../lib/users.js";
+import { closeTestDatabase, createTestDatabase } from "./helpers/test-db.js";
 
 const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex");
 
@@ -21,18 +24,6 @@ function buildRequest({ bearer = null, cookie = null } = {}) {
     },
     cookies: {
       get: (name) => (name === SESSION_COOKIE_NAME && cookie ? { value: cookie } : undefined),
-    },
-  };
-}
-
-function buildDb({ rows = [], onExecute } = {}) {
-  const calls = [];
-  return {
-    calls,
-    async execute(query) {
-      calls.push(query);
-      if (onExecute) return onExecute(query);
-      return { rows };
     },
   };
 }
@@ -49,8 +40,25 @@ function buildResponseWithCookies() {
   };
 }
 
+function seedUser(db) {
+  const user = {
+    id: faker.string.uuid(),
+    name: faker.person.fullName(),
+    email: faker.internet.email().toLowerCase(),
+  };
+  insertUser(db, { ...user, passwordHash: hashPassword(faker.internet.password({ length: 16 })) });
+  return user;
+}
+
+let db;
+
 beforeEach(() => {
   faker.seed(20260228);
+  db = createTestDatabase();
+});
+
+afterEach(() => {
+  closeTestDatabase(db);
 });
 
 describe("hashPassword / verifyPassword", () => {
@@ -93,89 +101,79 @@ describe("hashPassword / verifyPassword", () => {
 });
 
 describe("createSession", () => {
-  it("persiste o hash do token e devolve token/expiração", async () => {
-    const db = buildDb();
+  it("persiste o hash do token e devolve token/expiração", () => {
+    const user = seedUser(db);
 
-    const { token, expiresAt } = await createSession(db, "user-1");
+    const { token, expiresAt } = createSession(db, user.id);
 
     expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(new Date(expiresAt).getTime()).toBeGreaterThan(Date.now());
 
-    const insert = db.calls[0];
-    expect(insert.sql).toContain("INSERT INTO sessions");
-    expect(insert.args).toEqual([sha256(token), "user-1", expiresAt]);
+    const row = db.prepare("SELECT * FROM sessions WHERE user_id = ?").get(user.id);
+    expect(row.token_hash).toBe(sha256(token));
+    expect(row.expires_at).toBe(expiresAt);
   });
 });
 
 describe("getUserFromRequest", () => {
-  const userRow = () => ({
-    id: faker.string.uuid(),
-    name: faker.person.fullName(),
-    email: faker.internet.email().toLowerCase(),
+  it("autentica via header Authorization: Bearer", () => {
+    const user = seedUser(db);
+    const { token } = createSession(db, user.id);
+
+    const authenticated = getUserFromRequest(db, buildRequest({ bearer: `Bearer ${token}` }));
+
+    expect(authenticated).toEqual({ id: user.id, name: user.name, email: user.email });
   });
 
-  it("autentica via header Authorization: Bearer", async () => {
-    const row = userRow();
-    const db = buildDb({ rows: [row] });
-    const request = buildRequest({ bearer: `Bearer ${faker.string.alphanumeric(32)}` });
+  it("autentica via cookie de sessão", () => {
+    const user = seedUser(db);
+    const { token } = createSession(db, user.id);
 
-    const user = await getUserFromRequest(db, request);
+    const authenticated = getUserFromRequest(db, buildRequest({ cookie: token }));
 
-    expect(user).toEqual({ id: String(row.id), name: String(row.name), email: String(row.email) });
-    expect(db.calls[0].sql).toContain("FROM sessions");
+    expect(authenticated.id).toBe(user.id);
   });
 
-  it("autentica via cookie de sessão", async () => {
-    const row = userRow();
+  it("retorna null sem token", () => {
+    expect(getUserFromRequest(db, buildRequest())).toBeNull();
+  });
+
+  it("retorna null quando a sessão não existe", () => {
+    seedUser(db);
+
+    expect(
+      getUserFromRequest(db, buildRequest({ bearer: `Bearer ${faker.string.alphanumeric(32)}` })),
+    ).toBeNull();
+  });
+
+  it("retorna null quando a sessão expirou", () => {
+    const user = seedUser(db);
     const token = faker.string.alphanumeric(32);
-    let capturedHash = null;
-    const db = buildDb({
-      onExecute: (query) => {
-        capturedHash = query.args[0];
-        return { rows: [row] };
-      },
+    insertSession(db, {
+      tokenHash: sha256(token),
+      userId: user.id,
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
     });
 
-    const user = await getUserFromRequest(db, buildRequest({ cookie: token }));
-
-    expect(user.id).toBe(String(row.id));
-    expect(capturedHash).toBe(sha256(token));
-  });
-
-  it("retorna null sem token e não consulta o banco", async () => {
-    const db = buildDb();
-
-    await expect(getUserFromRequest(db, buildRequest())).resolves.toBeNull();
-    expect(db.calls).toHaveLength(0);
-  });
-
-  it("retorna null quando a sessão não existe ou expirou", async () => {
-    const db = buildDb({ rows: [] });
-    const token = faker.string.alphanumeric(32);
-
-    await expect(
-      getUserFromRequest(db, buildRequest({ bearer: `Bearer ${token}` })),
-    ).resolves.toBeNull();
+    expect(getUserFromRequest(db, buildRequest({ cookie: token }))).toBeNull();
   });
 });
 
 describe("deleteSessionFromRequest", () => {
-  it("remove a sessão pelo hash do token", async () => {
-    const token = faker.string.alphanumeric(32);
-    const db = buildDb();
+  it("remove a sessão pelo hash do token", () => {
+    const user = seedUser(db);
+    const { token } = createSession(db, user.id);
 
-    await deleteSessionFromRequest(db, buildRequest({ cookie: token }));
+    deleteSessionFromRequest(db, buildRequest({ cookie: token }));
 
-    expect(db.calls[0].sql).toContain("DELETE FROM sessions");
-    expect(db.calls[0].args).toEqual([sha256(token)]);
+    const count = db.prepare("SELECT COUNT(*) AS total FROM sessions").get().total;
+    expect(count).toBe(0);
   });
 
-  it("não faz nada sem token", async () => {
-    const db = buildDb();
-
-    await deleteSessionFromRequest(db, buildRequest());
-
-    expect(db.calls).toHaveLength(0);
+  it("ignora token desconhecido", () => {
+    expect(() =>
+      deleteSessionFromRequest(db, buildRequest({ cookie: "token-inexistente" })),
+    ).not.toThrow();
   });
 });
 
