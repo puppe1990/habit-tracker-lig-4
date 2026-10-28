@@ -1,49 +1,36 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
 import AddHabitForm from "./AddHabitForm";
+
+const DEMO = ["done", "empty", "missed", "done", "empty", "empty", "done"];
 
 export default function EmptyState({ onAdd }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 p-16 shadow-inner ring-1 ring-slate-200/50"
+      transition={{ duration: 0.4 }}
+      className="board-shell flex flex-col items-center px-8 py-14 text-center"
     >
-      <div className="text-center">
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
-          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 shadow-lg ring-1 ring-indigo-200/50"
-        >
-          <Plus className="h-10 w-10 text-indigo-500" />
-        </motion.div>
-        <motion.h3
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="mb-3 text-xl font-bold text-slate-800"
-        >
-          Nenhum hábito cadastrado
-        </motion.h3>
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="mb-8 text-slate-600"
-        >
-          Comece adicionando seu primeiro hábito para acompanhar seu progresso diário.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-        >
-          <AddHabitForm onAdd={onAdd} />
-        </motion.div>
+      <div className="mb-8 grid grid-cols-7 gap-2" aria-hidden="true">
+        {DEMO.map((state, index) => (
+          <div key={index} className="well">
+            {state === "empty" ? (
+              <span className="well-void" />
+            ) : (
+              <span className={`disc disc-${state}`} />
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="font-display text-sm tracking-[0.28em] text-gold">PRIMEIRA JOGADA</p>
+      <h3 className="mt-2 font-display text-4xl uppercase tracking-wide">O tabuleiro está vazio</h3>
+      <p className="mx-auto mt-3 max-w-md text-sm text-white/75">
+        Crie uma linha de hábito. Cada dia é um buraco. Amarelo encaixa, vermelho cai do outro lado.
+      </p>
+      <div className="mt-8">
+        <AddHabitForm onAdd={onAdd} emphasis />
       </div>
     </motion.div>
   );

@@ -1,13 +1,28 @@
+import localFont from "next/font/local";
 import "./globals.css";
 
+const display = localFont({
+  src: "./fonts/big-shoulders-display.woff2",
+  variable: "--font-display",
+  weight: "700 800",
+  display: "swap",
+});
+
+const grotesk = localFont({
+  src: "./fonts/schibsted-grotesk.woff2",
+  variable: "--font-sans",
+  weight: "400 700",
+  display: "swap",
+});
+
 export const metadata = {
-  title: "Habit Tracker - Lig-4 Style",
-  description: "Interactive habit tracker with Connect 4 style visualization",
+  title: "LIG-4 — Hábitos",
+  description: "Marque o dia. Encaixe o disco. Quatro em linha com a sua rotina.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Habit Tracker",
+    statusBarStyle: "black-translucent",
+    title: "LIG-4",
   },
   icons: {
     icon: "/favicon.ico",
@@ -20,12 +35,12 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#3b82f6",
+  themeColor: "#1658c9",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${display.variable} ${grotesk.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -62,7 +77,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body className={grotesk.className}>{children}</body>
     </html>
   );
 }

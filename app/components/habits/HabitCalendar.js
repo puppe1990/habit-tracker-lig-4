@@ -10,16 +10,16 @@ function weekdayLabel(year, month, day) {
   return new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" });
 }
 
-function HabitHeaderCell({ habit, habitIndex, style, stats, onRenameHabit, onRemoveHabit }) {
+function isSameCalendarDay(year, month, day) {
+  const now = new Date();
+  return now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
+}
+
+function HabitHeaderCell({ habit, style, stats, onRenameHabit, onRemoveHabit }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, delay: 0.05 * habitIndex }}
-      className={style}
-    >
+    <div className={style}>
       <HabitHeader habit={habit} stats={stats} onRename={onRenameHabit} onRemove={onRemoveHabit} />
-    </motion.div>
+    </div>
   );
 }
 
@@ -41,65 +41,58 @@ function HorizontalGrid({
     <div className="min-w-[800px]">
       <div
         className="grid gap-1"
-        style={{ gridTemplateRows: `60px repeat(${habits.length}, minmax(80px, 1fr))` }}
+        style={{ gridTemplateRows: `56px repeat(${habits.length}, minmax(84px, 1fr))` }}
       >
-        <div className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-2 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50">
+        <div className="sticky top-0 z-10 -mx-1 -mt-1 rounded-2xl bg-black/35 p-1.5 backdrop-blur-sm">
           <div
             className="grid gap-1"
-            style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}
+            style={{ gridTemplateColumns: `132px repeat(${totalDays}, minmax(56px, 1fr))` }}
           >
-            <div className="flex items-center justify-center text-sm font-semibold text-slate-600">
-              Hábitos
+            <div className="flex items-center justify-center font-display text-xs tracking-[0.22em] text-white/70">
+              LINHA
             </div>
-            {daysArray.map((day, dayIndex) => (
-              <motion.div
+            {daysArray.map((day) => (
+              <div
                 key={day}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
-                className="flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 px-2 py-2 text-xs font-semibold shadow-sm ring-1 ring-indigo-200/50"
+                className={`flex flex-col items-center justify-center rounded-xl px-1 py-1.5 text-[11px] font-semibold ${
+                  isSameCalendarDay(year, month, day) ? "bg-black/25 text-gold" : "text-white/90"
+                }`}
               >
-                <span className="text-slate-800">{pad(day)}</span>
-                <span className="text-slate-500">{weekdayLabel(year, month, day)}</span>
-              </motion.div>
+                <span className="font-display text-base leading-none tracking-wide">
+                  {pad(day)}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-white/55">
+                  {weekdayLabel(year, month, day)}
+                </span>
+              </div>
             ))}
           </div>
         </div>
 
-        {habits.map((habit, habitIndex) => (
-          <motion.div
+        {habits.map((habit) => (
+          <div
             key={habit.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 * habitIndex }}
             className="grid gap-1"
-            style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}
+            style={{ gridTemplateColumns: `132px repeat(${totalDays}, minmax(56px, 1fr))` }}
           >
             <HabitHeaderCell
               habit={habit}
-              habitIndex={habitIndex}
-              style="sticky left-0 z-10 -ml-2 -my-1 rounded-2xl bg-white/90 p-3 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+              style="board-plaque sticky left-0 z-10 -ml-1 my-0.5 p-3"
               stats={completionForHabit(habit.id)}
               onRenameHabit={onRenameHabit}
               onRemoveHabit={onRemoveHabit}
             />
-            {daysArray.map((day, dayIndex) => (
-              <motion.div
+            {daysArray.map((day) => (
+              <HabitCell
                 key={`${habit.id}-${day}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.05 * (habitIndex + dayIndex) }}
-                className="border-r border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
-              >
-                <HabitCell
-                  day={day}
-                  mark={monthRecords[habit.id]?.[day]}
-                  onCycle={() => onCycleDay(habit.id, day)}
-                  onClear={() => onClearDay(habit.id, day)}
-                />
-              </motion.div>
+                day={day}
+                mark={monthRecords[habit.id]?.[day]}
+                isToday={isSameCalendarDay(year, month, day)}
+                onCycle={() => onCycleDay(habit.id, day)}
+                onClear={() => onClearDay(habit.id, day)}
+              />
             ))}
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
@@ -122,49 +115,43 @@ function VerticalGrid({
     <div className="min-w-[800px]">
       <div
         className="grid gap-1"
-        style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}
+        style={{ gridTemplateColumns: `108px repeat(${habits.length}, minmax(140px, 1fr))` }}
       >
         <div />
-        {habits.map((habit, index) => (
+        {habits.map((habit) => (
           <HabitHeaderCell
             key={habit.id}
             habit={habit}
-            habitIndex={index}
-            style="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+            style="board-plaque sticky top-0 z-10 -mx-1 -mt-1 p-4"
             stats={completionForHabit(habit.id)}
             onRenameHabit={onRenameHabit}
             onRemoveHabit={onRemoveHabit}
           />
         ))}
 
-        {daysArray.map((day, dayIndex) => (
+        {daysArray.map((day) => (
           <Fragment key={day}>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
-              className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+            <div
+              className={`board-plaque sticky left-0 z-10 -ml-1 my-0.5 flex items-center justify-between px-3 py-2.5 text-sm font-semibold ${
+                isSameCalendarDay(year, month, day) ? "text-gold" : ""
+              }`}
             >
-              <span className="text-slate-800">
+              <span className="font-display text-base tracking-wide">
                 {pad(day)}/{pad(month + 1)}
               </span>
-              <span className="text-slate-500 text-xs">{weekdayLabel(year, month, day)}</span>
-            </motion.div>
-            {habits.map((habit, habitIndex) => (
-              <motion.div
+              <span className="text-[10px] font-medium uppercase tracking-wide text-white/55">
+                {weekdayLabel(year, month, day)}
+              </span>
+            </div>
+            {habits.map((habit) => (
+              <HabitCell
                 key={`${habit.id}-${day}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
-                className="border-b border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
-              >
-                <HabitCell
-                  day={day}
-                  mark={monthRecords[habit.id]?.[day]}
-                  onCycle={() => onCycleDay(habit.id, day)}
-                  onClear={() => onClearDay(habit.id, day)}
-                />
-              </motion.div>
+                day={day}
+                mark={monthRecords[habit.id]?.[day]}
+                isToday={isSameCalendarDay(year, month, day)}
+                onCycle={() => onCycleDay(habit.id, day)}
+                onClear={() => onClearDay(habit.id, day)}
+              />
             ))}
           </Fragment>
         ))}
@@ -178,10 +165,10 @@ export default function HabitCalendar(props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.3 }}
-      className="overflow-auto rounded-3xl bg-gradient-to-br from-white/80 to-slate-50/80 p-6 shadow-2xl ring-1 ring-slate-200/50 backdrop-blur-sm"
+      transition={{ duration: 0.45 }}
+      className="board-shell overflow-auto p-5"
     >
       <Grid {...props} />
     </motion.div>

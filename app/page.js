@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { daysInMonth, formatMonthLabel, getMonthKey } from "../lib/habits/dates";
 import { DEFAULT_APP_STATE, normalizeAppState } from "../lib/habits/state";
@@ -14,6 +13,7 @@ import {
 import { habitLifetimeSummary, monthCompletion } from "../lib/habits/stats";
 import { exportHabitsToCsv, importHabitsFromCsv } from "../lib/habits/csv";
 import AddHabitForm from "./components/habits/AddHabitForm";
+import BrandMark from "./components/habits/BrandMark";
 import CalendarFooter from "./components/habits/CalendarFooter";
 import CalendarLegend from "./components/habits/CalendarLegend";
 import EmptyState from "./components/habits/EmptyState";
@@ -246,18 +246,22 @@ export default function ConnectFourHabitTracker() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans flex items-center justify-center">
+      <div className="felt flex min-h-screen items-center justify-center">
+        <div className="felt-grain" />
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando...</p>
+          <div className="mx-auto mb-4 animate-pulse">
+            <BrandMark size={64} />
+          </div>
+          <p className="font-display text-sm tracking-[0.28em] text-muted">MONTANDO O TABULEIRO</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
-      <div className="mx-auto max-w-[1200px] p-6">
+    <div className="felt min-h-screen">
+      <div className="felt-grain" />
+      <div className="relative mx-auto max-w-[1200px] p-6">
         <TrackerHeader
           user={currentUser}
           monthLabel={formatMonthLabel(year, month)}
@@ -313,16 +317,9 @@ export default function ConnectFourHabitTracker() {
           />
         )}
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-6 text-center"
-        >
-          <p className="text-xs text-slate-500">
-            💾 Os dados são salvos no servidor (SQLite) com fallback local no navegador
-          </p>
-        </motion.div>
+        <p className="mt-8 text-center text-[11px] text-muted">
+          Os discos ficam no servidor, com cópia local no navegador.
+        </p>
       </div>
     </div>
   );

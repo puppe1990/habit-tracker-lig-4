@@ -2,9 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Big Shoulders Display";
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url("./fonts/big-shoulders-display.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("./fonts/schibsted-grotesk.woff2") format("woff2");
+}
+
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
+    --felt: #070e18;
+    --ink: #eef4ff;
+    --muted: #93a4bb;
+    --board: #1658c9;
+    --board-hi: #2b7cf0;
+    --board-lo: #0e3f96;
+    --well: #071a48;
+    --gold: #ffd24a;
+    --disc-done: #ffd24a;
+    --disc-missed: #e23a2e;
   }
 
   * {
@@ -12,18 +38,12 @@
   }
 
   body {
-    @apply m-0 w-[390px] min-h-[560px] text-slate-900;
-    font-family:
-      "Inter",
-      "Segoe UI",
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      sans-serif;
+    @apply m-0 w-[390px] min-h-[560px] text-[var(--ink)];
+    font-family: "Schibsted Grotesk", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
     background:
-      radial-gradient(circle at 8% -12%, #dbeafe 0%, transparent 45%),
-      radial-gradient(circle at 95% 8%, #e9d5ff 0%, transparent 40%),
-      linear-gradient(145deg, #f8fafc 0%, #eef2ff 52%, #e2e8f0 100%);
+      radial-gradient(circle at 8% -12%, rgba(43, 124, 240, 0.34) 0%, transparent 46%),
+      radial-gradient(circle at 95% 8%, rgba(255, 210, 74, 0.1) 0%, transparent 40%),
+      linear-gradient(165deg, #0b1730 0%, #070e18 58%, #050a12 100%);
   }
 }
 
@@ -41,7 +61,9 @@
   }
 
   .brand {
-    @apply flex flex-1 items-center gap-2.5 rounded-2xl border border-slate-300/60 bg-white/90 px-3 py-2.5 shadow-[0_10px_26px_rgba(15,23,42,0.1)] backdrop-blur;
+    @apply flex flex-1 items-center gap-2.5 rounded-2xl border border-white/10 px-3 py-2.5;
+    background: rgba(10, 24, 48, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .brand img {
@@ -49,54 +71,59 @@
   }
 
   .brand h1 {
-    @apply m-0 text-[15px] font-extrabold leading-tight tracking-[-0.01em] text-slate-900;
+    @apply m-0 text-[22px] uppercase leading-none tracking-wide text-[var(--ink)];
+    font-family: "Big Shoulders Display", Impact, sans-serif;
   }
 
   .brand p {
-    @apply m-0.5 text-[11px] font-semibold text-slate-600;
+    @apply m-0.5 text-[11px] font-medium text-[var(--muted)];
   }
 
   .logout-btn {
-    @apply h-9 rounded-xl border border-rose-200 bg-white/90 px-3 text-[13px] font-bold text-rose-600 shadow-[0_8px_18px_rgba(239,68,68,0.13)] transition;
+    @apply h-9 rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] font-bold text-[#ffb4ac] transition;
   }
 
   .web-link-btn {
-    @apply grid h-9 place-items-center rounded-xl border border-indigo-200 bg-white/90 px-3 text-[12px] font-bold text-indigo-600 shadow-[0_8px_18px_rgba(79,70,229,0.12)] transition;
+    @apply grid h-9 place-items-center rounded-xl border border-white/10 bg-white/5 px-3 text-[12px] font-bold text-[var(--gold)] transition;
   }
 
   .web-link-btn:hover {
-    @apply border-indigo-300 bg-indigo-50 text-indigo-700;
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
   }
 
   .logout-btn:hover {
-    @apply bg-rose-50;
+    background: color-mix(in srgb, var(--disc-missed) 15%, transparent);
   }
 
   #auth-view,
   #tracker-view {
-    @apply rounded-[18px] border border-slate-300/50 p-3 shadow-[0_14px_30px_rgba(15,23,42,0.08)] backdrop-blur;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.9));
+    @apply rounded-[18px] border border-white/10 p-3;
+    background: rgba(8, 20, 40, 0.86);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
   }
 
   .auth-tabs,
   .tracker-tabs {
-    @apply mb-2.5 grid grid-cols-2 gap-2;
+    @apply mb-2.5 grid grid-cols-2 gap-1 rounded-2xl bg-black/25 p-1;
   }
 
   .auth-tab,
   .tracker-tab {
-    @apply h-9 cursor-pointer rounded-xl border border-slate-300 bg-white text-[13px] font-extrabold text-slate-700 transition;
+    @apply h-9 cursor-pointer rounded-xl border-0 bg-transparent text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)] transition;
+    font-family: "Big Shoulders Display", Impact, sans-serif;
   }
 
   .auth-tab:hover,
   .tracker-tab:hover {
-    @apply bg-slate-50;
+    @apply text-[var(--ink)];
   }
 
   .auth-tab.active,
   .tracker-tab.active {
-    @apply border-indigo-600 text-white shadow-[0_8px_20px_rgba(79,70,229,0.32)];
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    @apply text-[#1a1404];
+    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .auth-form {
@@ -112,27 +139,31 @@
   }
 
   .password-toggle {
-    @apply absolute right-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg border-0 bg-transparent text-sm leading-none text-slate-500 shadow-none transition;
+    @apply absolute right-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg border-0 bg-transparent text-sm leading-none text-[var(--muted)] shadow-none transition;
   }
 
   .password-toggle:hover {
-    @apply bg-slate-100 text-slate-700;
+    @apply bg-white/10 text-[var(--ink)];
   }
 
   .auth-form input,
   .add-form input {
-    @apply h-10 w-full rounded-xl border border-slate-300 bg-white/95 px-3 text-[13px] text-slate-900 outline-none transition;
+    @apply h-10 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-[13px] text-[var(--ink)] outline-none transition;
   }
 
   .auth-form input:focus,
   .add-form input:focus {
-    @apply border-indigo-500 ring-4 ring-indigo-200/60;
+    @apply border-[var(--gold)];
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--disc-done) 28%, transparent);
   }
 
   .auth-form > button,
   .add-form button {
-    @apply h-10 rounded-xl border-0 text-[13px] font-black text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] transition;
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    @apply h-10 rounded-xl border-0 text-[13px] font-black text-[#1a1404] transition;
+    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 48%, #d4a017 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 8px 16px rgba(212, 160, 23, 0.28);
   }
 
   .auth-form > button:hover,
@@ -141,7 +172,9 @@
   }
 
   .auth-error {
-    @apply mt-2.5 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs font-medium text-rose-700;
+    @apply mt-2.5 rounded-xl px-2.5 py-2 text-xs font-medium text-[#ffb4ac];
+    border: 1px solid color-mix(in srgb, var(--disc-missed) 30%, transparent);
+    background: color-mix(in srgb, var(--disc-missed) 15%, transparent);
   }
 
   .month-nav {
@@ -149,15 +182,17 @@
   }
 
   .month-nav strong {
-    @apply grid h-[50px] place-items-center rounded-[20px] border border-indigo-300/70 bg-white/90 text-[18px] font-black text-slate-800;
+    @apply grid h-[50px] place-items-center rounded-[16px] border border-white/10 bg-black/25 text-[20px] uppercase tracking-wider text-[var(--ink)];
+    font-family: "Big Shoulders Display", Impact, sans-serif;
   }
 
   .icon-btn {
-    @apply h-[50px] w-[46px] cursor-pointer rounded-[18px] border border-slate-300 bg-white/90 text-2xl font-black text-slate-600 shadow-[0_4px_10px_rgba(15,23,42,0.07)] transition;
+    @apply h-[50px] w-[46px] cursor-pointer rounded-[16px] border border-white/10 bg-white/5 text-xl font-black text-[var(--muted)] transition;
   }
 
   .icon-btn:hover {
-    @apply border-indigo-300 bg-indigo-50 text-indigo-700;
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    color: var(--gold);
   }
 
   .add-form {
@@ -175,17 +210,19 @@
 
   .habits-list::-webkit-scrollbar-thumb,
   .summary-list::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-slate-300;
+    @apply rounded-full;
+    background: rgba(255, 255, 255, 0.18);
   }
 
   .empty {
-    @apply rounded-2xl border border-dashed border-slate-300 bg-white/80 px-3 py-5 text-center text-[13px] font-medium text-slate-500;
+    @apply rounded-2xl border border-dashed border-white/15 bg-black/20 px-3 py-5 text-center text-[13px] font-medium text-[var(--muted)];
   }
 
   .habit-item,
   .summary-item,
   .summary-card {
-    @apply rounded-2xl border border-slate-300/50 bg-white/95 shadow-[0_10px_22px_rgba(15,23,42,0.07)];
+    @apply rounded-2xl border border-white/10;
+    background: rgba(10, 24, 48, 0.72);
   }
 
   .habit-item,
@@ -198,7 +235,7 @@
   }
 
   .habit-name {
-    @apply max-w-[235px] cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-0 bg-transparent p-0 text-left text-[13px] font-black text-slate-900;
+    @apply max-w-[235px] cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-0 bg-transparent p-0 text-left text-[13px] font-bold text-[var(--ink)];
   }
 
   .habit-actions {
@@ -206,15 +243,17 @@
   }
 
   .habit-actions button {
-    @apply size-7 cursor-pointer rounded-lg border border-slate-200 bg-white text-slate-600 transition;
+    @apply size-7 cursor-pointer rounded-lg border border-white/10 bg-white/5 text-[var(--muted)] transition;
   }
 
   .habit-actions .edit-btn:hover {
-    @apply border-indigo-300 bg-indigo-50 text-indigo-700;
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    color: var(--gold);
   }
 
   .habit-actions .delete-btn:hover {
-    @apply border-rose-200 bg-rose-50 text-rose-600;
+    border-color: color-mix(in srgb, var(--disc-missed) 40%, transparent);
+    color: var(--disc-missed);
   }
 
   .state-row {
@@ -230,22 +269,24 @@
   }
 
   .state-btn.state-empty {
-    @apply text-slate-700;
-    background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+    @apply text-[var(--ink)];
+    background: rgba(255, 255, 255, 0.12);
   }
 
   .state-btn.state-done {
-    @apply text-white shadow-[0_8px_18px_rgba(16,185,129,0.32)];
-    background: linear-gradient(90deg, #34d399, #10b981);
+    @apply text-[#1a1404];
+    background: linear-gradient(180deg, #ffe27a, var(--disc-done));
+    box-shadow: 0 8px 16px rgba(212, 160, 23, 0.28);
   }
 
   .state-btn.state-missed {
-    @apply text-white shadow-[0_8px_18px_rgba(239,68,68,0.3)];
-    background: linear-gradient(90deg, #fb7185, #ef4444);
+    @apply text-white;
+    background: linear-gradient(180deg, #ff8f82, var(--disc-missed));
+    box-shadow: 0 8px 16px rgba(226, 58, 46, 0.28);
   }
 
   .state-hint {
-    @apply text-[11px] font-semibold text-slate-500;
+    @apply text-[11px] font-medium text-[var(--muted)];
   }
 
   .connect4-days {
@@ -253,12 +294,17 @@
   }
 
   .connect4-day {
-    @apply text-center text-[11px] font-bold text-slate-600;
+    @apply text-center text-[11px] font-bold text-white/70;
+    font-family: "Big Shoulders Display", Impact, sans-serif;
   }
 
   .connect4-strip {
-    @apply mt-1.5 grid grid-cols-7 gap-1.5 rounded-xl border border-yellow-400 p-2 shadow-[inset_0_2px_0_rgba(255,255,255,0.5)];
-    background: linear-gradient(180deg, #fde047, #facc15);
+    @apply mt-1.5 grid grid-cols-7 gap-1.5 rounded-xl border-[3px] p-2;
+    background: linear-gradient(180deg, var(--board-hi), var(--board-lo));
+    border-color: #0a3378;
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -6px 10px rgba(0, 0, 0, 0.22);
   }
 
   .connect4-nav {
@@ -270,11 +316,12 @@
   }
 
   .strip-nav-btn {
-    @apply h-11 w-7 cursor-pointer rounded-lg border border-slate-300 bg-white/95 text-xs font-black text-slate-600 shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition;
+    @apply h-11 w-7 cursor-pointer rounded-lg border border-white/10 bg-white/5 text-xs font-black text-[var(--muted)] transition;
   }
 
   .strip-nav-btn:hover:not(:disabled) {
-    @apply border-indigo-300 bg-indigo-50 text-indigo-700;
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    color: var(--gold);
   }
 
   .strip-nav-btn:disabled {
@@ -282,16 +329,30 @@
   }
 
   .connect4-token {
-    @apply aspect-square w-full rounded-full border-2 border-slate-800/20 shadow-[inset_0_2px_3px_rgba(255,255,255,0.35)];
-    background: radial-gradient(circle at 30% 25%, #f8fafc 0%, #cbd5e1 50%, #94a3b8 100%);
+    @apply aspect-square w-full rounded-full;
+    background: radial-gradient(circle at 50% 42%, #0a2a68 0%, var(--well) 72%);
+    box-shadow:
+      inset 0 4px 8px rgba(0, 0, 0, 0.55),
+      0 1px 0 rgba(255, 255, 255, 0.16);
   }
 
   .connect4-token.done {
-    background: radial-gradient(circle at 30% 25%, #86efac 0%, #22c55e 45%, #15803d 100%);
+    background: radial-gradient(circle at 32% 28%, #ffe99a 0%, var(--disc-done) 42%, #d4a017 100%);
+    box-shadow:
+      inset 0 3px 4px rgba(255, 255, 255, 0.45),
+      inset 0 -4px 6px rgba(0, 0, 0, 0.25);
   }
 
   .connect4-token.missed {
-    background: radial-gradient(circle at 30% 25%, #fda4af 0%, #ef4444 45%, #b91c1c 100%);
+    background: radial-gradient(
+      circle at 32% 28%,
+      #ff8f82 0%,
+      var(--disc-missed) 44%,
+      #9c1b16 100%
+    );
+    box-shadow:
+      inset 0 3px 4px rgba(255, 255, 255, 0.45),
+      inset 0 -4px 6px rgba(0, 0, 0, 0.25);
   }
 
   .summary-panel {
@@ -307,11 +368,12 @@
   }
 
   .summary-card-label {
-    @apply text-[11px] font-bold text-slate-500;
+    @apply text-[10px] font-bold uppercase tracking-wider text-[var(--muted)];
   }
 
   .summary-card-value {
-    @apply mt-1 text-[22px] font-black leading-none text-slate-900;
+    @apply mt-1 text-[24px] leading-none text-[var(--ink)];
+    font-family: "Big Shoulders Display", Impact, sans-serif;
   }
 
   .summary-list {
@@ -319,7 +381,7 @@
   }
 
   .summary-item-title {
-    @apply m-0 text-[13px] font-black text-slate-900;
+    @apply m-0 text-[13px] font-bold text-[var(--ink)];
   }
 
   .summary-metrics {
@@ -327,14 +389,14 @@
   }
 
   .summary-metric {
-    @apply rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5;
+    @apply rounded-xl border border-white/10 bg-black/20 px-2 py-1.5;
   }
 
   .summary-metric-label {
-    @apply text-[10px] font-bold text-slate-500;
+    @apply text-[10px] font-bold uppercase tracking-wider text-[var(--muted)];
   }
 
   .summary-metric-value {
-    @apply mt-0.5 text-xs font-extrabold text-slate-800;
+    @apply mt-0.5 text-xs font-extrabold text-[var(--ink)];
   }
 }
