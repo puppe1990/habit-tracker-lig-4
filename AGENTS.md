@@ -5,13 +5,13 @@ Guia para agentes de código trabalhando neste repositório.
 ## 1. Objetivo do projeto
 
 - App web de hábitos (estilo Lig-4) em Next.js 16.
-- Backend via rotas `app/api/*` com autenticação + estado por usuário em Turso.
-- Extensão Chrome (`chrome-extension/`) que usa o backend em produção da Netlify.
+- Backend via rotas `app/api/*` com autenticação + estado por usuário em SQLite local (`node:sqlite`).
+- Extensão Chrome (`chrome-extension/`) que usa o backend em produção no Cleat.
 
 ## 2. Stack e estrutura
 
 - Web: Next.js 16 + React 19 (`app/`).
-- Banco: Turso/libSQL (`lib/turso.js`).
+- Banco: SQLite em arquivo via `node:sqlite` (`lib/db.js`, `lib/users.js`, `lib/sessions.js`, `lib/user-state.js`).
 - Auth/session: `lib/auth.js`.
 - CORS centralizado: `lib/cors.js`.
 - Extensão Chrome: HTML/CSS/JS vanilla em `chrome-extension/`.
@@ -20,7 +20,7 @@ Pastas principais:
 
 - `app/`: páginas e rotas de API (App Router).
 - `app/components/habits/`: componentes de UI (header, calendário, resumo, célula, token).
-- `lib/`: auth, DB e CORS do backend (`auth.js`, `turso.js`, `cors.js`).
+- `lib/`: auth, DB e CORS do backend (`auth.js`, `db.js`, `users.js`, `sessions.js`, `user-state.js`, `cors.js`).
 - `lib/habits/`: lógica pura de hábitos — `dates.js`, `records.js`, `stats.js`, `csv.js`, `state.js`.
 - `chrome-extension/`: popup da extensão.
 - `chrome-extension/lib/`: cópia própria de `dates`, `records`, `stats` + `api`/`store` (páginas de extensão não importam arquivos fora de `chrome-extension/`).
@@ -55,15 +55,14 @@ Extensão (Tailwind):
 
 Arquivo base: `.env.example`
 
-Obrigatórias para backend persistente:
-
-- `TURSO_DATABASE_URL`
-- `TURSO_AUTH_TOKEN`
+- `DATABASE_PATH`: caminho do arquivo SQLite (default `./.data/habits.sqlite`; em produção `/opt/habit-tracker-lig-4/data/habits.sqlite`).
+- `NEXT_PUBLIC_SITE_URL`: origem pública usada pelo CORS (opcional).
 
 Observações:
 
-- Sem Turso configurado, APIs retornam `503` para escrita.
-- URL pública atual usada pela extensão: `https://habit-tracker-lig-4.netlify.app`
+- O schema é criado automaticamente no primeiro acesso (`ensureSchema`).
+- Em produção o Cleat detecta `DATABASE_PATH` e habilita o addon `litestream` (backup).
+- URL pública: `https://habit-tracker-lig-4.apps.gestaobem.com`
 
 ## 5. Regras para alterações
 
@@ -90,14 +89,13 @@ Rotas:
 Comportamento esperado:
 
 - `401` quando sessão/token inválido.
-- `503` quando Turso não configurado.
+- `409` no signup de email já cadastrado.
 - Sessão via cookie HTTP-only e/ou Bearer token (extensão usa Bearer).
 
 ## 7. Fluxo recomendado para mudanças
 
 1. Implementar mudança.
-2. Rodar validação mínima:
-   - `node --check` nos arquivos JS alterados (quando aplicável).
+2. Rodar o gate: `npm run verify` (prettier + lint + testes + build).
    - `npm run extension:css` se mexeu no popup.
 3. Testar fluxo crítico:
    - Signin/signup.
@@ -107,21 +105,24 @@ Comportamento esperado:
 
 ## 8. Deploy
 
-Produção em Netlify (`habit-tracker-lig-4`).
+Produção no Cleat (`habit-tracker-lig-4`, server `gestaobem-cx43`).
 
-Comando comum:
-
-- `netlify deploy --prod --build --message "<mensagem>"`
+- Manifesto: `.cleat_deploy/deploy.json` (runtime `node`, `node_version` 22, standalone).
+- Env obrigatória: `DATABASE_PATH=/opt/habit-tracker-lig-4/data/habits.sqlite` (fora do release; o Cleat liga o addon `litestream`).
+- Deploy: MCP `cleat__deploy` com `app=habit-tracker-lig-4`; acompanhe com `deploy_status` e `apps_logs`.
+- `next.config.js` usa `output: "standalone"`; o Cleat sobe `.next/standalone/server.js`.
 
 Após deploy de backend:
 
 - Validar preflight CORS para origem `chrome-extension://...` em `/api/auth/signin`.
 - Recarregar extensão em `chrome://extensions` (botão **Reload**).
+- `curl -sS https://habit-tracker-lig-4.apps.gestaobem.com/api/state` deve responder 401 sem token.
 
 ## 9. Problemas conhecidos
 
 - `npm run lint` ignora `.next/`, `.netlify/` e `chrome-extension/popup.css` (gerado); não remova esses ignores.
 - Testes usam scrypt real (custo alto): evite loops muito grandes em testes de senha.
+- `node:sqlite` emite `ExperimentalWarning` no Node 22; é esperado e inofensivo.
 - Popup pode quebrar com storage antigo/corrompido; manter parsing defensivo no `popup.js`.
 
 ## 10. Definição de pronto
@@ -131,4 +132,4 @@ Uma task está pronta quando:
 - Funcionalidade solicitada funciona no web ou extensão.
 - Não há erro de runtime no console do popup.
 - Mudanças de CSS da extensão foram compiladas para `popup.css`.
-- Se houve mudança de API consumida pela extensão, deploy de produção foi realizado e validado.
+- Se houve mudança de API consumida pela extensão, deploy no Cleat foi realizado e validado.

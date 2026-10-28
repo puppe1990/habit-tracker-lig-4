@@ -4,12 +4,12 @@ Aplicação de hábitos no estilo Connect 4, com:
 
 - App web em Next.js 16
 - Autenticação por usuário
-- Persistência em Turso (libSQL)
-- Extensão Chrome conectada ao backend da Netlify
+- Persistência em SQLite local (`node:sqlite`)
+- Extensão Chrome conectada ao backend em produção no Cleat
 
 ## Demo
 
-- Web (produção): [https://habit-tracker-lig-4.netlify.app](https://habit-tracker-lig-4.netlify.app)
+- Web (produção): [https://habit-tracker-lig-4.apps.gestaobem.com](https://habit-tracker-lig-4.apps.gestaobem.com)
 
 ## Funcionalidades
 
@@ -24,7 +24,7 @@ Aplicação de hábitos no estilo Connect 4, com:
 ### Extensão Chrome (`chrome-extension/`)
 
 - Login e cadastro direto no popup
-- Consome backend web em produção (`https://habit-tracker-lig-4.netlify.app`)
+- Consome backend web em produção (`https://habit-tracker-lig-4.apps.gestaobem.com`)
 - Visual LIG-4 com bolinhas coloridas
 - Aba `Hábitos` e aba `Resumo`
 - Setas nas pontas da faixa para navegar nos dias
@@ -37,7 +37,7 @@ Aplicação de hábitos no estilo Connect 4, com:
 - Tailwind CSS
 - Framer Motion
 - Lucide React
-- Turso / `@libsql/client`
+- SQLite via `node:sqlite` (sem dependência nativa)
 
 ## Estrutura
 
@@ -45,8 +45,9 @@ Aplicação de hábitos no estilo Connect 4, com:
 - `app/components/habits/` componentes de UI do calendário e resumo
 - `app/api/auth/*` autenticação
 - `app/api/state` estado de hábitos por usuário
+- `lib/db.js` conexão SQLite + schema
+- `lib/users.js`, `lib/sessions.js`, `lib/user-state.js` acesso a dados
 - `lib/auth.js` sessão e hash de senha
-- `lib/turso.js` conexão e schema
 - `lib/cors.js` CORS para web e `chrome-extension://...`
 - `lib/habits/` lógica pura (datas, registros, estatísticas, CSV, estado)
 - `chrome-extension/` popup da extensão (`lib/` lógica pura, `ui/` views)
@@ -54,19 +55,19 @@ Aplicação de hábitos no estilo Connect 4, com:
 
 ## Pré-requisitos
 
-- Node.js 18+
+- Node.js 22.13+ (para `node:sqlite` sem flag)
 - npm
-- Banco Turso criado
 
 ## Variáveis de ambiente
 
-Copie e preencha:
+Copie e ajuste:
 
 ```bash
 cp .env.example .env.local
 ```
 
-`TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` são obrigatórias para persistência/autenticação.
+- `DATABASE_PATH` (default `./.data/habits.sqlite`): arquivo SQLite; criado automaticamente com o schema.
+- `NEXT_PUBLIC_SITE_URL` (opcional): origem pública liberada no CORS.
 
 ## Rodando localmente
 
@@ -123,15 +124,15 @@ npm run extension:css
 - `GET /api/state`
 - `PUT /api/state`
 
-## Deploy (Netlify)
+## Deploy (Cleat)
 
-Deploy de produção:
+Produção no Cleat (`habit-tracker-lig-4`, server `gestaobem-cx43`), com `output: "standalone"` no Next.
 
-```bash
-netlify deploy --prod --build
-```
+- Manifesto: `.cleat_deploy/deploy.json` (`runtime: node`, `node_version: 22`).
+- Env: `DATABASE_PATH=/opt/habit-tracker-lig-4/data/habits.sqlite` (persistente, fora do release; o Cleat habilita `litestream`).
+- Deploy via MCP: `cleat__deploy` com `app=habit-tracker-lig-4`, depois `deploy_status` e `apps_logs`.
 
-Observação: para extensão funcionar, o backend precisa estar deployado com CORS habilitado nas rotas de auth/state.
+Observação: para a extensão funcionar, o backend precisa estar no ar com CORS habilitado nas rotas de auth/state.
 
 ## Licença
 

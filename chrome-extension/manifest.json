@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Acompanhe, crie e edite hábitos direto no popup do Chrome.",
   "permissions": ["storage"],
-  "host_permissions": ["https://habit-tracker-lig-4.netlify.app/*"],
+  "host_permissions": ["https://habit-tracker-lig-4.apps.gestaobem.com/*"],
   "action": {
     "default_title": "Habit Tracker LIG-4",
     "default_popup": "popup.html",

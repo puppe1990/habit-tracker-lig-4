@@ -23,7 +23,6 @@
     "*.{js,mjs,cjs,jsx}": "eslint --fix"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
