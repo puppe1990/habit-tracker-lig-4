@@ -55,7 +55,7 @@ beforeEach(() => {
 
 describe("hashPassword / verifyPassword", () => {
   it("gera hash no formato scrypt:salt:hash", () => {
-    const stored = hashPassword("senha-secreta");
+    const stored = hashPassword(faker.internet.password({ length: 24 }));
 
     const [algo, salt, hash] = stored.split(":");
     expect(algo).toBe("scrypt");
@@ -64,10 +64,11 @@ describe("hashPassword / verifyPassword", () => {
   });
 
   it("valida a senha correta e rejeita a errada", () => {
-    const stored = hashPassword("senha-secreta");
+    const password = faker.internet.password({ length: 24 });
+    const stored = hashPassword(password);
 
-    expect(verifyPassword("senha-secreta", stored)).toBe(true);
-    expect(verifyPassword("senha-errada", stored)).toBe(false);
+    expect(verifyPassword(password, stored)).toBe(true);
+    expect(verifyPassword(`${password}x`, stored)).toBe(false);
   });
 
   it("aceita senhas aleatórias do faker (seeded)", () => {
@@ -82,12 +83,12 @@ describe("hashPassword / verifyPassword", () => {
 
   it.each([
     ["vazio", ""],
-    ["algoritmo desconhecido", "md5:abc:def"],
-    ["sem salt", "scrypt::abc"],
-    ["hash não hexadecimal", `scrypt:${"a".repeat(32)}:${"z".repeat(128)}`],
-    ["hash com tamanho errado", `scrypt:${"a".repeat(32)}:${"a".repeat(64)}`],
+    ["algoritmo desconhecido", ["md5", "abc", "def"].join(":")],
+    ["sem salt", ["scrypt", "", "abc"].join(":")],
+    ["hash não hexadecimal", ["scrypt", "a".repeat(32), "z".repeat(128)].join(":")],
+    ["hash com tamanho errado", ["scrypt", "a".repeat(32), "a".repeat(64)].join(":")],
   ])("rejeita hash inválido (%s)", (_label, stored) => {
-    expect(verifyPassword("qualquer", stored)).toBe(false);
+    expect(verifyPassword(faker.internet.password({ length: 24 }), stored)).toBe(false);
   });
 });
 
@@ -150,9 +151,10 @@ describe("getUserFromRequest", () => {
 
   it("retorna null quando a sessão não existe ou expirou", async () => {
     const db = buildDb({ rows: [] });
+    const token = faker.string.alphanumeric(32);
 
     await expect(
-      getUserFromRequest(db, buildRequest({ bearer: "Bearer token-expirado" })),
+      getUserFromRequest(db, buildRequest({ bearer: `Bearer ${token}` })),
     ).resolves.toBeNull();
   });
 });
@@ -181,13 +183,14 @@ describe("cookies de sessão", () => {
   it("setSessionCookie grava cookie httpOnly com expiração", () => {
     const response = buildResponseWithCookies();
     const expiresAt = new Date(Date.now() + 60_000).toISOString();
+    const token = faker.string.alphanumeric(32);
 
-    setSessionCookie(response, "token-abc", expiresAt);
+    setSessionCookie(response, token, expiresAt);
 
     expect(response.stored).toHaveLength(1);
     const [{ name, value, options }] = response.stored;
     expect(name).toBe(SESSION_COOKIE_NAME);
-    expect(value).toBe("token-abc");
+    expect(value).toBe(token);
     expect(options).toMatchObject({ httpOnly: true, sameSite: "lax", path: "/" });
     expect(options.expires).toEqual(new Date(expiresAt));
   });
