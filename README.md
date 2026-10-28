@@ -42,12 +42,15 @@ Aplicação de hábitos no estilo Connect 4, com:
 ## Estrutura
 
 - `app/` páginas e APIs (App Router)
+- `app/components/habits/` componentes de UI do calendário e resumo
 - `app/api/auth/*` autenticação
 - `app/api/state` estado de hábitos por usuário
 - `lib/auth.js` sessão e hash de senha
 - `lib/turso.js` conexão e schema
 - `lib/cors.js` CORS para web e `chrome-extension://...`
-- `chrome-extension/` popup da extensão
+- `lib/habits/` lógica pura (datas, registros, estatísticas, CSV, estado)
+- `chrome-extension/` popup da extensão (`lib/` lógica pura, `ui/` views)
+- `tests/` suíte Vitest (node + jsdom para o popup)
 
 ## Pré-requisitos
 

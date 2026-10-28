@@ -18,9 +18,14 @@ Guia para agentes de código trabalhando neste repositório.
 
 Pastas principais:
 
-- `app/`: páginas e rotas de API.
-- `lib/`: utilitários de auth, DB e CORS.
+- `app/`: páginas e rotas de API (App Router).
+- `app/components/habits/`: componentes de UI (header, calendário, resumo, célula, token).
+- `lib/`: auth, DB e CORS do backend (`auth.js`, `turso.js`, `cors.js`).
+- `lib/habits/`: lógica pura de hábitos — `dates.js`, `records.js`, `stats.js`, `csv.js`, `state.js`.
 - `chrome-extension/`: popup da extensão.
+- `chrome-extension/lib/`: cópia própria de `dates`, `records`, `stats` + `api`/`store` (páginas de extensão não importam arquivos fora de `chrome-extension/`).
+- `chrome-extension/ui/`: views do popup (`authView`, `habitsView`, `summaryView`).
+- `tests/`: Vitest (ambiente node; `popup-bootstrap.test.js` usa jsdom).
 - `public/`: ícones PWA e favicon.
 
 ## 3. Comandos padrão
@@ -67,6 +72,9 @@ Observações:
 - Manter compatibilidade com os seletores usados no JS do popup (ex.: `.auth-tab`, `.tracker-tab`, `.habit-item`).
 - Alterações em auth/API devem preservar suporte a `Authorization: Bearer <token>`.
 - Para endpoints usados pela extensão, manter CORS com `OPTIONS` + headers via `lib/cors.js`.
+- Lógica de hábitos (datas, registros, estatísticas, CSV) vive em `lib/habits/` e deve ter teste em `tests/`; não duplique dentro de componentes.
+- O popup carrega `<script type="module">`: novos arquivos da extensão entram em `chrome-extension/lib` ou `chrome-extension/ui` e são importados por `popup.js` (sem globais novas).
+- Componentes de UI do web ficam em `app/components/habits/`; `app/page.js` só orquestra estado, efeitos e handlers.
 
 ## 6. Contratos de API relevantes
 
