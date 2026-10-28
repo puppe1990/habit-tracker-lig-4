@@ -15,7 +15,7 @@
     --panel: rgba(255, 250, 240, 0.78);
     --panel-border: rgba(20, 32, 51, 0.12);
     --gold: #b8860b;
-    --disc-done: #ffd24a;
+    --disc-done: #2fd15c;
     --disc-missed: #e23a2e;
     --plaque: rgba(8, 24, 58, 0.92);
   }
@@ -73,7 +73,7 @@
     --panel-border: rgba(255, 255, 255, 0.1);
     background:
       radial-gradient(1100px 560px at 8% -10%, rgba(43, 124, 240, 0.32), transparent 56%),
-      radial-gradient(820px 440px at 100% 0%, rgba(255, 210, 74, 0.1), transparent 48%),
+      radial-gradient(820px 440px at 100% 0%, rgba(47, 209, 92, 0.14), transparent 48%),
       radial-gradient(circle at 50% 120%, #0b1730, #070e18 58%);
     color: #eef4ff;
   }
@@ -131,15 +131,15 @@
   }
 
   .well:focus-visible {
-    outline: 2px solid var(--disc-done);
+    outline: 2px solid #ffd24a;
     outline-offset: 3px;
   }
 
   .well-today {
     box-shadow:
       inset 0 5px 10px rgba(0, 0, 0, 0.55),
-      0 0 0 2px var(--disc-done),
-      0 0 16px color-mix(in srgb, var(--disc-done) 45%, transparent);
+      0 0 0 2px #ffd24a,
+      0 0 16px color-mix(in srgb, #ffd24a 45%, transparent);
   }
 
   .well-void {
@@ -184,7 +184,7 @@
   }
 
   .disc-done {
-    background: radial-gradient(circle at 32% 28%, #ffe99a 0%, var(--disc-done) 42%, #d4a017 100%);
+    background: radial-gradient(circle at 32% 28%, #9effb8 0%, var(--disc-done) 42%, #12913a 100%);
   }
 
   .disc-missed {
@@ -271,14 +271,14 @@
   }
 
   .field:focus {
-    border-color: var(--disc-done);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--disc-done) 28%, transparent);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 28%, transparent);
   }
 
   .btn-gold {
     border: 0;
     border-radius: 14px;
-    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 48%, #d4a017 100%);
+    background: linear-gradient(180deg, #ffe27a 0%, #ffd24a 48%, #d4a017 100%);
     color: #1a1404;
     font-weight: 800;
     box-shadow:
@@ -312,7 +312,7 @@
   }
 
   .score-tab[data-active="true"] {
-    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 100%);
+    background: linear-gradient(180deg, #ffe27a 0%, #ffd24a 100%);
     color: #1a1404;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }

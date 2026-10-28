@@ -29,7 +29,7 @@
     --board-lo: #0e3f96;
     --well: #071a48;
     --gold: #ffd24a;
-    --disc-done: #ffd24a;
+    --disc-done: #2fd15c;
     --disc-missed: #e23a2e;
   }
 
@@ -42,7 +42,7 @@
     font-family: "Schibsted Grotesk", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
     background:
       radial-gradient(circle at 8% -12%, rgba(43, 124, 240, 0.34) 0%, transparent 46%),
-      radial-gradient(circle at 95% 8%, rgba(255, 210, 74, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 95% 8%, rgba(47, 209, 92, 0.14) 0%, transparent 40%),
       linear-gradient(165deg, #0b1730 0%, #070e18 58%, #050a12 100%);
   }
 }
@@ -122,7 +122,7 @@
   .auth-tab.active,
   .tracker-tab.active {
     @apply text-[#1a1404];
-    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 100%);
+    background: linear-gradient(180deg, #ffe27a 0%, #ffd24a 100%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
@@ -154,13 +154,13 @@
   .auth-form input:focus,
   .add-form input:focus {
     @apply border-[var(--gold)];
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--disc-done) 28%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 28%, transparent);
   }
 
   .auth-form > button,
   .add-form button {
     @apply h-10 rounded-xl border-0 text-[13px] font-black text-[#1a1404] transition;
-    background: linear-gradient(180deg, #ffe27a 0%, var(--disc-done) 48%, #d4a017 100%);
+    background: linear-gradient(180deg, #ffe27a 0%, #ffd24a 48%, #d4a017 100%);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.5),
       0 8px 16px rgba(212, 160, 23, 0.28);
@@ -274,9 +274,9 @@
   }
 
   .state-btn.state-done {
-    @apply text-[#1a1404];
-    background: linear-gradient(180deg, #ffe27a, var(--disc-done));
-    box-shadow: 0 8px 16px rgba(212, 160, 23, 0.28);
+    @apply text-[#06240f];
+    background: linear-gradient(180deg, #9effb8, var(--disc-done));
+    box-shadow: 0 8px 16px rgba(18, 145, 58, 0.32);
   }
 
   .state-btn.state-missed {
@@ -337,7 +337,7 @@
   }
 
   .connect4-token.done {
-    background: radial-gradient(circle at 32% 28%, #ffe99a 0%, var(--disc-done) 42%, #d4a017 100%);
+    background: radial-gradient(circle at 32% 28%, #9effb8 0%, var(--disc-done) 42%, #12913a 100%);
     box-shadow:
       inset 0 3px 4px rgba(255, 255, 255, 0.45),
       inset 0 -4px 6px rgba(0, 0, 0, 0.25);

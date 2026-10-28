@@ -22,7 +22,7 @@ export default function SummaryTab({ habits, summaryForHabit, onAdd }) {
         <p className="font-display text-sm tracking-[0.28em] text-gold">PLACAR</p>
         <h2 className="mt-1 font-display text-4xl uppercase tracking-wide">Em jogo</h2>
         <p className="mt-2 text-sm text-white/70">
-          Amarelos depois do último vermelho. A falha zera a linha.
+          Verdes depois do último vermelho. A falha zera a linha.
         </p>
         <div className="mt-6 inline-flex items-center gap-4 rounded-2xl bg-black/25 px-6 py-4">
           <span className="disc disc-done disc-lg" />
@@ -81,7 +81,7 @@ export default function SummaryTab({ habits, summaryForHabit, onAdd }) {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min((summary.totalCumprido / 30) * 100, 100)}%` }}
                   transition={{ duration: 0.7, delay: 0.1 * index }}
-                  className="h-full rounded-full bg-gradient-to-r from-[#ffe27a] to-disc-done"
+                  className="h-full rounded-full bg-gradient-to-r from-[#9effb8] to-disc-done"
                 />
               </div>
             </div>
